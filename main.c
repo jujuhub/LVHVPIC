@@ -58,7 +58,8 @@
  *          Local functions
  */
 void HIH6030_Write(uint8_t command, uint16_t dat, I2C1_MESSAGE_STATUS *pstatus);
-uint8_t HIH6030_Read(uint8_t command, uint8_t *pData);
+void HIH6030_Read(uint8_t command, uint8_t *pData);
+uint8_t fetch_RHT(float *pHum, float *pTemp);
 
 /*
                          Main application
@@ -71,35 +72,44 @@ int main(void)
     /*
      *      HIH6030 Relative Humidity & Temperature Sensor
      */
-    // Power on
-    //SEN = 1;
     
     // Enter Command Mode within 3 ms
-    I2C1_MESSAGE_STATUS i2cStatus; // needed for write function
-    HIH6030_Write(0xA0, 0x0000, &i2cStatus);
+    I2C1_MESSAGE_STATUS i2cStatus;
+    i2cStatus = I2C1_MESSAGE_PENDING;
+//    HIH6030_Write(0xA0, 0x0000, &i2cStatus);
+//    while (i2cStatus != I2C1_MESSAGE_COMPLETE);
 
-    // Read/Write from EEPROM location 0x18 (Alarm_High_On)
-    uint8_t sensorData[3];
-    uint8_t *pD;
-    pD = sensorData;
+    // Read/Write from EEPROM location
+    uint8_t cmdmodeData[3], *pD;
+    pD = cmdmodeData;
 
-    HIH6030_Read(0x18, pD);
+//    HIH6030_Read(0x18, pD); // Alarm_High_On
     
-    HIH6030_Write(0x58, 0x3333, &i2cStatus);
-    HIH6030_Write(0x59, 0x3000, &i2cStatus);
-
-    HIH6030_Write(0x5A, 0x0CCD, &i2cStatus);
-    HIH6030_Write(0x5B, 0x1000, &i2cStatus);
-
-    // Power off / Need to end transmission???
-    //PEN = 1;
+//    i2cStatus = I2C1_MESSAGE_PENDING; // need to reset msg status?
+//    HIH6030_Write(0x58, 0x3333, &i2cStatus); // set Alarm_High_On at 80% RH
+//    while (i2cStatus != I2C1_MESSAGE_COMPLETE);
     
+//    i2cStatus = I2C1_MESSAGE_PENDING;
+//    HIH6030_Write(0x59, 0x3000, &i2cStatus); // set Alarm_High_Off at 75% RH
+//    while (i2cStatus != I2C1_MESSAGE_COMPLETE);
+
+//    HIH6030_Write(0x5A, 0x0CCD, &i2cStatus); // set Alarm_Low_On at 20% RH
+//    HIH6030_Write(0x5B, 0x1000, &i2cStatus); // set Alarm_Low_Off at 25% RH
+
     // Enter Normal Operation
-    HIH6030_Write(0x80, 0x0000, &i2cStatus);
+//    HIH6030_Write(0x80, 0x0000, &i2cStatus);
     
-    //while (1)
+    float hum, temp, *pHum, *pTemp;
+    uint8_t _status = fetch_RHT(pHum, pTemp);
+    
+//    while (1)
     {
         // Add your application code
+        
+        // Fetch RH&T data from HIH6030-021 sensor
+        //float hum, temp, *pHum, *pTemp;
+        //uint8_t _status = fetch_RHT(pHum, pTemp);
+        
     }
     return 1; 
 }
@@ -108,23 +118,25 @@ void HIH6030_Write(uint8_t command, uint16_t dat, I2C1_MESSAGE_STATUS *pstatus)
 {
     /**
      *  @Summary
-     *      Write to HIH6030 slave device
+     *      Write to HIH6030 slave device in Command Mode
      *  @Param
-     *      command: command value
+     *      command: command byte
      *  @Param
-     *      dat: 16-bit data
+     *      dat: 16-bit (2-byte) data
      *  @Param
-     *      pstatus: pointer to status variable
+     *      pstatus: pointer to I2C status variable
      */
 
-    *pstatus = I2C1_MESSAGE_PENDING;
-    uint16_t counter, timeOut = 0, slaveTimeOut = 0;
+    // begin transmission
+    I2C1CONLbits.SEN = 1;
     
-    uint8_t dat_H, dat_L; // need to split up data into 8-bit parts
+    uint16_t retryTimeOut = 0, slaveTimeOut = 0;
+    
+    uint8_t dat_H, dat_L; // need to split up into 8-bit parts
     dat_H = (dat >> 8);
     dat_L = (uint8_t)(dat);
     
-    uint8_t writeBuffer[3]; // command and data to be written to device
+    uint8_t writeBuffer[3]; // command byte and data to be written
     writeBuffer[0] = command;
     writeBuffer[1] = dat_H;
     writeBuffer[2] = dat_L;
@@ -139,9 +151,8 @@ void HIH6030_Write(uint8_t command, uint16_t dat, I2C1_MESSAGE_STATUS *pstatus)
         while (*pstatus == I2C1_MESSAGE_PENDING)
         {
             // add some delay here
-            uint8_t i; // need to use timers for delay?
-            for (i = 0; i < 20; ++i);
-                //printf("%d", i);
+            uint8_t dt; // need to use timers for delay?
+            for (dt = 0; dt < 20; ++dt);
             
             // check for timeout
             if (slaveTimeOut == HIH6030_I2C_TIMEOUT)
@@ -154,38 +165,48 @@ void HIH6030_Write(uint8_t command, uint16_t dat, I2C1_MESSAGE_STATUS *pstatus)
             break;
         
         // check for max retry and skip this byte
-        if (timeOut == HIH6030_RETRY_MAX)
+        if (retryTimeOut == HIH6030_RETRY_MAX)
             break;
         else
-            timeOut++;
+            retryTimeOut++;
     }
     
-    if (*pstatus == I2C1_MESSAGE_FAIL) // #TODO: this breaks out of nothing
+    if (*pstatus == I2C1_MESSAGE_FAIL)
         return;
+
+    // end transmission
+    I2C1CONLbits.PEN = 1;
 
 }
 
-uint8_t HIH6030_Read(uint8_t command, uint8_t *pData)
+void HIH6030_Read(uint8_t command, uint8_t *pData)
 {
     /**
      *  @Summary
-     *      Read from HIH6030 slave device and return message status
+     *      Read from HIH6030 slave device in Command Mode
      *  @Param
-     *      command: command value or EEPROM location
+     *      command: EEPROM location / command byte
      *  @Param
      *      pData: pointer to data block that stores data
      */
     
     I2C1_MESSAGE_STATUS i2cStatus;
-    uint8_t *pD, i;
-    pD = pData; // #TODO: may need to make data uint16_t
+    i2cStatus = I2C1_MESSAGE_PENDING;
+    
+    uint8_t *pD, b;
+    pD = pData; // #TODO: may need to make data uint16_t?
     uint16_t retryTimeOut, slaveTimeOut;
     
-    for (i = 0; i < 3; ++i) // read 3 bytes, one at a time
-    {
-        HIH6030_Write(command, 0x0000, &i2cStatus); // initiate i2c communication
+    // send the command to read
+    HIH6030_Write(command, 0x0000, &i2cStatus);
+    while(i2cStatus != I2C1_MESSAGE_COMPLETE); // delay
     
-        if (i2cStatus == I2C1_MESSAGE_COMPLETE)
+    if (i2cStatus == I2C1_MESSAGE_COMPLETE)
+    {
+        // start transmission; should it be Restart bit?
+        I2C1CONLbits.SEN = 1;
+        
+        for (b = 0; b < 3; b++) // read 3 bytes, one at a time
         {
             retryTimeOut = 0;
             slaveTimeOut = 0;
@@ -197,64 +218,114 @@ uint8_t HIH6030_Read(uint8_t command, uint8_t *pData)
                 while (i2cStatus == I2C1_MESSAGE_PENDING)
                 {
                     // add delay here
-                    uint8_t i;
-                    for (i = 0; i < 20; ++i)
-                        printf("%d", i);
+                    uint8_t dt;
+                    for (dt = 0; dt < 20; ++dt);
                     
                     // check for timeout
                     if (slaveTimeOut == HIH6030_I2C_TIMEOUT)
-                        return 0;
+                        return;
                     else
                         slaveTimeOut++;
                 }
             
                 if (i2cStatus == I2C1_MESSAGE_COMPLETE)
                     break;
-            
+                
+                // check for retry and skip this byte
                 if (retryTimeOut == HIH6030_RETRY_MAX)
                     break;
                 else
                     retryTimeOut++;
             }
+            pD++;
+        }
+        
+        // end transmission
+        I2C1CONLbits.PEN = 1;
+    }
+
+    if (i2cStatus == I2C1_MESSAGE_FAIL)
+    {
+        return;
+    }
+    
+    //return;
+}
+
+uint8_t fetch_RHT(float *pHum, float *pTemp)
+{
+    /**
+     *  @Summary
+     *      Read from HIH6030 device and return data status, RH, T
+     *  @Param
+     *      pHum: pointer to RH variable
+     *  @Param
+     *      pTemp: pointer to T variable
+     */
+
+    uint8_t sensorData[4], _status, *pD, b;
+    uint16_t H_dat, T_dat, retryTimeOut, slaveTimeOut;
+    pD = sensorData;
+
+    I2C1_MESSAGE_STATUS i2cStatus;
+    i2cStatus = I2C1_MESSAGE_PENDING;
+
+    // Begin transmission
+    I2C1CONLbits.SEN = 1; 
+    
+    // Read the RH & T data bytes
+    for (b = 0; b < 4; b++)
+    {
+        retryTimeOut = 0;
+        slaveTimeOut = 0;
+        
+        while (i2cStatus != I2C1_MESSAGE_FAIL)
+        {
+            I2C1_MasterRead(pD, 1, HIH6030_ADDRESS, &i2cStatus);
+            
+            while (i2cStatus == I2C1_MESSAGE_PENDING)
+            {
+                // add delay here
+                uint8_t dt;
+                for (dt = 0; dt < 20; ++dt);
+
+                // check for timeout
+                if (slaveTimeOut == HIH6030_I2C_TIMEOUT)
+                    break;
+                else
+                    slaveTimeOut++;
+            }
+            
+            if (i2cStatus == I2C1_MESSAGE_COMPLETE)
+                break;
+                
+            // check for retry and skip this byte
+            if (retryTimeOut == HIH6030_RETRY_MAX)
+                break;
+            else
+                retryTimeOut++;
         }
         
         if (i2cStatus == I2C1_MESSAGE_FAIL)
         {
-            return 0;
             break;
         }
         
         pD++;
     }
     
-    return 1;
-}
+    // Get status of data (first 2 bits)
+    _status = (sensorData[0] >> 6);
 
-char fetch_RHT(uint8_t addr, uint8_t *pHum, uint8_t *pTemp)
-{
-    /**
-     *  @Summary
-     *      Read from HIH6030 device and return data status, RH, T
-     *  @Param
-     *      addr: address of targeted sensor
-     *  @Param
-     *      pHum: pointer to RH variable
-     *  @Param
-     *      pTemp: pointer to T variable
-     */
+    // Convert RH & T counts to float; #TODO: fix bitwise operations
+    H_dat = (sensorData[0] << 2)*256 + sensorData[1];
+    T_dat = sensorData[2]*256 + (sensorData[4] >> 2);
     
-    I2C1_MESSAGE_STATUS i2cStatus;
-    uint8_t sensorData[4], _status;
-    uint8_t *pD;
-    uint16_t H_dat, T_dat;
-    
-    // Initiate data fetch
-    HIH6030_Write(0x80, 0x0000, &i2cStatus);
-    
-    // Read the RH and T high and low bytes
-    HIH6030_Read(command???, *pD);
+    *pHum = H_dat/16382. * 100.; // %RH
+    *pTemp = T_dat/16382.*165. - 40.; // degrees C
     
     return _status;
+
 }
 
 /**
