@@ -126,12 +126,55 @@ int main(void)
             break;
     } // end RH&T sensor
 
-//    while (1)
+
+    /* CANbus testing */
+//    C1TR01CONbits.TXEN0 = 0x1; // already done in can1.c
+//    C1TR01CONbits.TX0PRI = 0x3;
+    
+//    can1msgBuf[0][0] = 0x123;
+
+    while (1)
     {
         // Add your application code
         
         /* Make RH&T measurement, fetch results from HIH6030-021 sensor */
         
+        
+        /* CANbus testing */
+        // transmission
+//        uCAN_MSG testCANmsg, *pCANmsg;
+//        pCANmsg = &testCANmsg;
+//        
+//        testCANmsg.frame.id = 0x123;
+//        testCANmsg.frame.idType = CAN_FRAME_STD;
+//        testCANmsg.frame.msgtype = CAN_MSG_DATA;
+//        testCANmsg.frame.dlc = 0b1000;
+//        testCANmsg.frame.data0 = 0xDE;
+//        testCANmsg.frame.data1 = 0xAD;
+//        testCANmsg.frame.data2 = 0xBE;
+//        testCANmsg.frame.data3 = 0xEF;
+//        testCANmsg.frame.data4 = 0x00;
+//        testCANmsg.frame.data5 = 0x00;
+//        testCANmsg.frame.data6 = 0x00;
+//        testCANmsg.frame.data7 = 0x00;
+//        
+//        CAN1_TransmitEnable();
+//        
+//        CAN_TX_PRIOIRTY msg_prio = CAN_PRIORITY_MEDIUM;
+//        CAN1_transmit(msg_prio, pCANmsg);
+//        while (C1TR01CONbits.TXREQ0 == 1);
+
+        // reception
+        uCAN_MSG rcvCANmsg, *pRcvCANmsg;
+        pRcvCANmsg = &rcvCANmsg;
+        
+        CAN1_ReceiveEnable();
+        
+        CAN1_receive(pRcvCANmsg);
+        while (C1RXFUL1bits.RXFUL1 == 0);
+        C1RXFUL1bits.RXFUL1 = 0;
+        
+        printf("%x", rcvCANmsg.frame.data0);
     }
     return 1; 
 }
@@ -148,7 +191,7 @@ uint8_t fetch_RHT(float *pHum, float *pTemp)
      */
 
     /* Declare variables */
-    uint8_t writeBuffer[1], sensorData[4] = {0}, _status, *pD, b;
+    uint8_t writeBuffer[1], sensorData[4] = {0}, _status, *pD;
     uint16_t H_dat, T_dat, retryTimeOut = 0, slaveTimeOut = 0;
     pD = sensorData;
     writeBuffer[0] = (HIH6030_ADDRESS << 1); // dummy data
