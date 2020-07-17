@@ -87,83 +87,42 @@ int main(void)
 
 //    HIH6030_Read(0x18, pD); // Alarm_High_On
 
-//    i2cStatus = I2C1_MESSAGE_PENDING; // need to reset msg status?
-//    HIH6030_Write(0x58, 0x3333, &i2cStatus); // set Alarm_High_On at 80% RH
-//    HIH6030_Write(0x59, 0x3000, &i2cStatus); // set Alarm_High_Off at 75% RH
-//    HIH6030_Write(0x5A, 0x0CCD, &i2cStatus); // set Alarm_Low_On at 20% RH
-//    HIH6030_Write(0x5B, 0x1000, &i2cStatus); // set Alarm_Low_Off at 25% RH
-
-    /* Enter Normal Operation */
-//    HIH6030_Write(0x80, 0x0000, &i2cStatus);
-
-    /* Make a humidity and temperature measurement, fetch the results */
-    float hum = 0., temp = 0., *pHum, *pTemp;
-    pHum = &hum;
-    pTemp = &temp;
-    uint8_t _status = fetch_RHT(pHum, pTemp);
-    
-    switch(_status) // should use this to send CAN messages to Raspberry Pi
-    {
-        case 0:
-            printf("Normal.\n");
-            // send data to RP
-            break;
-        
-        case 1:
-            printf("Stale Data.\n");
-            // do not send data; try to make a new measurement
-            break;
-        
-        case 2:
-            // this shouldn't happen in Normal Operation mode
-            printf("Command Mode.\n");
-            // send warning to RP
-            break;
-        
-        default: 
-            printf("Diagnostic, or Invalid Data.\n");
-            // send warning to RP
-            break;
-    } // end RH&T sensor
-
-
-    /* CANbus testing */
-//    C1TR01CONbits.TXEN0 = 0x1; // already done in can1.c
-//    C1TR01CONbits.TX0PRI = 0x3;
-    
-//    can1msgBuf[0][0] = 0x123;
 
     while (1)
     {
         // Add your application code
         
         /* Make RH&T measurement, fetch results from HIH6030-021 sensor */
-        
+        float hum = 0., temp = 0., *pHum, *pTemp;
+        pHum = &hum;
+        pTemp = &temp;
+        uint8_t _status = fetch_RHT(pHum, pTemp);
+
+        switch(_status) // should use this to send CAN messages to Raspberry Pi
+        {
+            case 0:
+                printf("Normal.\n");
+                // send data to RP
+                break;
+
+            case 1:
+                printf("Stale Data.\n");
+                // do not send data; try to make a new measurement
+                break;
+
+            case 2:
+                // this shouldn't happen in Normal Operation mode
+                printf("Command Mode.\n");
+                // send warning to RP
+                break;
+
+            default: 
+                printf("Diagnostic, or Invalid Data.\n");
+                // send warning to RP
+                break;
+        } // end RH&T sensor
         
         /* CANbus testing */
-        // transmission
-        uCAN_MSG txCANmsg, *pTxCANmsg;
-        pTxCANmsg = &txCANmsg;
-        
-        txCANmsg.frame.id = 0x123;
-        txCANmsg.frame.idType = CAN_FRAME_STD;
-        txCANmsg.frame.msgtype = CAN_MSG_DATA;
-        txCANmsg.frame.dlc = 0b1000;
-        txCANmsg.frame.data0 = 0xDE;
-        txCANmsg.frame.data1 = 0xAD;
-        txCANmsg.frame.data2 = 0xBE;
-        txCANmsg.frame.data3 = 0xEF;
-        txCANmsg.frame.data4 = 0x00;
-        txCANmsg.frame.data5 = 0x00;
-        txCANmsg.frame.data6 = 0x00;
-        txCANmsg.frame.data7 = 0x00;
-        
-        CAN1_TransmitEnable();
-        
-        CAN_TX_PRIOIRTY msg_prio = CAN_PRIORITY_MEDIUM;
-        CAN1_transmit(msg_prio, pCANmsg);
-        while (C1TR01CONbits.TXREQ0 == 1);
-
         // reception
         uCAN_MSG rxCANmsg, *pRxCANmsg;
         pRxCANmsg = &rxCANmsg;
@@ -183,14 +142,51 @@ int main(void)
         
         switch(msgID)
         {
-            case (0x123):
+            case 0x123: // RH&T request
+                uint16_t H_dat, T_dat, *pHum, *pTemp;
+                uint8_t humH, humL, tempH, tempL;
+                pHum = &H_dat;
+                pTemp = &T_dat;
                 
+                uint8_t _status = fetch_RHT(pHum, pTemp);
+                humH = H_dat >> 8;
+                humL = H_dat & 0xFF;
+                tempH = T_dat >> 8;
+                tempL = T_dat & 0xFF;
+                
+                uCAN_MSG txCANmsg, *pTxCANmsg;
+                pTxCANmsg = &txCANmsg;
+                
+                txCANmsg.frame.id = 0x123;
+                txCANmsg.frame.idType = CAN_FRAME_STD;
+                txCANmsg.frame.msgtype = CAN_MSG_DATA;
+                txCANmsg.frame.dlc = 0b1000;
+                txCANmsg.frame.data0 = _status;
+                txCANmsg.frame.data1 = humH;
+                txCANmsg.frame.data2 = humL;
+                txCANmsg.frame.data3 = tempH;
+                txCANmsg.frame.data4 = tempL;
+                txCANmsg.frame.data5 = 0x00;
+                txCANmsg.frame.data6 = 0x00;
+                txCANmsg.frame.data7 = 0x00;
+
+                CAN1_TransmitEnable();
+
+                CAN_TX_PRIOIRTY msg_prio = CAN_PRIORITY_MEDIUM;
+                CAN1_transmit(msg_prio, pTxCANmsg);
+                while (C1TR01CONbits.TXREQ0 == 1);
+                
+                break;
+
+            case 0x100: // Power shut-off request
+                // do something here
+                break;
         }
     }
     return 1; 
 }
 
-uint8_t fetch_RHT(float *pHum, float *pTemp)
+uint8_t fetch_RHT(uint16_t *pHum, uint16_t *pTemp)
 {
     /**
      *  @Summary
@@ -199,6 +195,8 @@ uint8_t fetch_RHT(float *pHum, float *pTemp)
      *      pHum: pointer to variable where RH will be stored
      *  @Param
      *      pTemp: pointer to variable where T will be stored
+     *  @Return
+     *      status of message
      */
 
     /* Declare variables */
@@ -320,10 +318,9 @@ uint8_t fetch_RHT(float *pHum, float *pTemp)
     H_dat = (sensorData[0] & 0x3F)*256 + sensorData[1]; // #TODO: FIX CONVERSIONS
     T_dat = (sensorData[2]*256 + sensorData[3]) >> 2;
 
-    *pHum = H_dat/16382. * 100.; // %RH
-    *pTemp = T_dat/16382.*165. - 40.; // degrees C
+    *pHum = H_dat; ///16382. * 100.; // %RH
+    *pTemp = T_dat; ///16382.*165. - 40.; // degrees C
 
-//    _status = 0x00;
     return _status;
 
 }
