@@ -15,10 +15,10 @@
 #include "hih6030.h"
 
 #define HIH6030_ADDR 0x27
-#define HIH6030_MAX_RETRY 255
-#define HIH6030_I2C_TIMEOUT 255
+#define HIH6030_MAX_RETRY 255       // maximum retry count (100)
+#define HIH6030_I2C_TIMEOUT 255     // maximum timeout count (50)
 
-uint8_t fetch_RHT(float *pHum, float *pTemp)
+uint8_t fetch_RHT(uint16_t *pHum, uint16_t *pTemp)
 {
     /**
      *  @Summary
@@ -27,6 +27,8 @@ uint8_t fetch_RHT(float *pHum, float *pTemp)
      *      pHum: pointer to variable where RH will be stored
      *  @Param
      *      pTemp: pointer to variable where T will be stored
+     *  @Return
+     *      status of message
      */
 
     /* Declare variables */
@@ -148,10 +150,9 @@ uint8_t fetch_RHT(float *pHum, float *pTemp)
     H_dat = (sensorData[0] & 0x3F)*256 + sensorData[1]; // #TODO: FIX CONVERSIONS
     T_dat = (sensorData[2]*256 + sensorData[3]) >> 2;
 
-    *pHum = H_dat/16382. * 100.; // %RH
-    *pTemp = T_dat/16382.*165. - 40.; // degrees C
+    *pHum = H_dat; ///16382. * 100.; // %RH
+    *pTemp = T_dat; ///16382.*165. - 40.; // degrees C
 
-//    _status = 0x00;
     return _status;
 
 }
@@ -187,7 +188,7 @@ void HIH6030_Write(uint8_t command, uint16_t dat, I2C1_MESSAGE_STATUS *pstatus)
     while (*pstatus != I2C1_MESSAGE_FAIL)
     {
         // supposedly this only writes 1 byte? #TODO: CHECK THIS!
-        I2C1_MasterWrite(writeBuffer, 3, HIH6030_ADDR, pstatus);
+        I2C1_MasterWrite(writeBuffer, 3, HIH6030_ADDRESS, pstatus);
         
         // wait for msg to be sent or status changed
         while (*pstatus == I2C1_MESSAGE_PENDING)
@@ -207,7 +208,7 @@ void HIH6030_Write(uint8_t command, uint16_t dat, I2C1_MESSAGE_STATUS *pstatus)
             break;
         
         // check for max retry and skip this byte
-        if (retryTimeOut == HIH6030_MAX_RETRY)
+        if (retryTimeOut == HIH6030_RETRY_MAX)
             break;
         else
             retryTimeOut++;
@@ -255,7 +256,7 @@ void HIH6030_Read(uint8_t command, uint8_t *pData)
         
             while (i2cStatus != I2C1_MESSAGE_FAIL)
             {
-                I2C1_MasterRead(pD, 1, HIH6030_ADDR, &i2cStatus);
+                I2C1_MasterRead(pD, 1, HIH6030_ADDRESS, &i2cStatus);
             
                 while (i2cStatus == I2C1_MESSAGE_PENDING)
                 {
@@ -274,7 +275,7 @@ void HIH6030_Read(uint8_t command, uint8_t *pData)
                     break;
                 
                 // check for retry and skip this byte
-                if (retryTimeOut == HIH6030_MAX_RETRY)
+                if (retryTimeOut == HIH6030_RETRY_MAX)
                     break;
                 else
                     retryTimeOut++;
