@@ -118,7 +118,7 @@ void CAN1_Initialize(void)
     C1CFG1 = 0x00;	//BRP TQ = (2 x 1)/FCAN; SJW 1 x TQ; 
     C1CFG2 = 0x198;	//WAKFIL disabled; SEG2PHTS Freely programmable; SEG2PH 2 x TQ; SEG1PH 4 x TQ; PRSEG 1 x TQ; SAM Once at the sample point; 
     C1FCTRL = 0xC001;	//FSA Transmit/Receive Buffer TRB1; DMABS 32; 
-    C1FEN1 = 0x07;	//FLTEN8 disabled; FLTEN7 disabled; FLTEN9 disabled; FLTEN0 disabled; FLTEN2 disabled; FLTEN10 disabled; FLTEN1 disabled; FLTEN11 disabled; FLTEN4 disabled; FLTEN3 disabled; FLTEN6 disabled; FLTEN5 disabled; FLTEN12 disabled; FLTEN13 disabled; FLTEN14 disabled; FLTEN15 disabled; 
+    C1FEN1 = 0x00;	//FLTEN8 disabled; FLTEN7 disabled; FLTEN9 disabled; FLTEN0 disabled; FLTEN2 disabled; FLTEN10 disabled; FLTEN1 disabled; FLTEN11 disabled; FLTEN4 disabled; FLTEN3 disabled; FLTEN6 disabled; FLTEN5 disabled; FLTEN12 disabled; FLTEN13 disabled; FLTEN14 disabled; FLTEN15 disabled; 
     C1CTRL1 = 0x00;	//CANCKS FOSC/2; CSIDL disabled; ABAT disabled; REQOP Sets Normal Operation Mode; WIN Uses buffer window; CANCAP disabled; 
 
     /* Filter configuration */
@@ -127,32 +127,29 @@ void CAN1_Initialize(void)
     C1CTRL1bits.WIN=1;
 	   
     /* select acceptance masks for filters */
-    C1FMSKSEL1bits.F0MSK = 0x0; // acceptance mask for filters 0-7
 
     /* Configure the masks */
-    C1RXM0SIDbits.SID = 0x0;
-    C1RXM1SIDbits.SID = 0x0;
-    C1RXM2SIDbits.SID = 0x0;
+    C1RXM0SIDbits.SID = 0x0; 
+    C1RXM1SIDbits.SID = 0x0; 
+    C1RXM2SIDbits.SID = 0x0; 
 
-    C1RXM0SIDbits.EID = 0x0;
-    C1RXM1SIDbits.EID = 0x0;
-    C1RXM2SIDbits.EID = 0x0;
+    C1RXM0SIDbits.EID = 0x0; 
+    C1RXM1SIDbits.EID = 0x0; 
+    C1RXM2SIDbits.EID = 0x0; 
      
-    C1RXM0EID = 0x00;
-    C1RXM1EID = 0x00;
-    C1RXM2EID = 0x00;
+    C1RXM0EID = 0x00;     	
+    C1RXM1EID = 0x00;     	
+    C1RXM2EID = 0x00;     	
 
-    C1RXM0SIDbits.MIDE = 0x1; //0x0;
-    C1RXM1SIDbits.MIDE = 0x0;
-    C1RXM2SIDbits.MIDE = 0x0;
+    C1RXM0SIDbits.MIDE = 0x0; 
+    C1RXM1SIDbits.MIDE = 0x0; 
+    C1RXM2SIDbits.MIDE = 0x0; 
     
     /* Configure the filters */
-    C1RXF0SIDbits.EXIDE = 0x0;
-    C1RXF0SIDbits.SID = 0x123; // filter messages with ID 123
-    C1RXF0SIDbits.EID = 0x0;
-    C1BUFPNT1bits.F0BP = 0x1;
 
+    
 
+  
     /* Non FIFO Mode */
 
     /* clear window bit to access ECAN control registers */
