@@ -1,14 +1,20 @@
 /* 
  * File:   hih6030.h
- * Author: physicslaptop
+ * Author: Julie He <juhe@ucdavis.edu>
  *
- * Created on July 17, 2020, 11:56 AM
+ * Created on August 4, 2020, 1:06 PM
  */
 
 #ifndef HIH6030_H
 #define	HIH6030_H
 
-#ifdef	__cplusplus // Provide C++ compatibility
+#include <stdint.h>
+#include <stdlib.h>
+#include <xc.h>
+
+#include "mcc_generated_files/i2c1.h"
+
+#ifdef	__cplusplus
     extern "C" {
 #endif
 
@@ -47,7 +53,7 @@ void HIH6030_Write(uint8_t command, uint16_t dat, I2C1_MESSAGE_STATUS *pstatus);
 void HIH6030_Read(uint8_t command, uint8_t *pData);
 
 #ifdef	__cplusplus
-}
+    }
 #endif
 
 #endif	/* HIH6030_H */

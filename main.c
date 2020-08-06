@@ -49,10 +49,65 @@
 #include "mcc_generated_files/mcc.h"
 #include "mcc_generated_files/interrupt_manager.h"
 
+#include "hih6030.h"
+
 /*
                          Local functions
  */
+#define LTC2631_ADDR 0x73
+#define LTC2631_I2C_TIMEOUT 255
+#define LTC2631_MAX_RETRY 255
 
+void set_HV(uint8_t *pHV)
+{
+    /**
+     *  @Summary
+     *      Send nominal HV value to LTC2631 (DAC), which in turn sets the HV 
+     *      for C40N (DC-HVDC converter)
+     *  @Param
+     *      pHV: pointer to array containing HV set value in 3 bytes
+     *  @Return
+     *      none
+     */
+
+    uint16_t retryTimeOut = 0, slaveTimeOut = 0;
+    uint8_t setHVBuffer[3];
+    setHVBuffer[0] = *pHV; // command
+    setHVBuffer[1] = *(pHV + 1); // MS data
+    setHVBuffer[2] = *(pHV + 2); // LS data; last 4 bits are don't care
+    
+    I2C1_MESSAGE_STATUS i2c_stat;
+    i2c_stat = I2C1_MESSAGE_PENDING;
+    
+    /* Initiate communication with DAC & transmit data (3 bytes) */
+    while (i2c_stat != I2C1_MESSAGE_COMPLETE)
+    {
+        I2C1_MasterWrite(setHVBuffer, 3, LTC2631_ADDR, &i2c_stat);
+        
+        while (i2c_stat == I2C1_MESSAGE_PENDING)
+        {
+            // check for timeout
+            if (slaveTimeOut == LTC2631_I2C_TIMEOUT)
+                break;
+            else
+                slaveTimeOut++;
+        }
+        
+        // check for max retry
+        if (retryTimeOut == LTC2631_MAX_RETRY)
+            break;
+        else
+            retryTimeOut++;
+        
+        // if transmission failed (or ACK was not received from slave device)
+        if (i2c_stat == I2C1_MESSAGE_FAIL)
+            // do something else?
+            break;
+    }
+    
+    /* Power down DAC */
+
+}
 
 /*
                          Main application
@@ -63,8 +118,29 @@ int main(void)
     SYSTEM_Initialize();
     INTERRUPT_GlobalEnable();
     
-//    uint8_t d = 0;
-//    for(d = 0; d < 255; ++d); // some delay
+    /* Turn on LV (set pin as output high) */
+    LV_ON_OFF_SetDigitalOutput();
+    LV_ON_OFF_SetHigh();
+    
+    /* Turn on HV (set pin as output high) */
+    // set HV value via DAC first? if float, need to convert to hex
+    uint8_t setHVBuffer[3] = {0}, *pHV;
+    setHVBuffer[0] = 0x03; // command
+    setHVBuffer[1] = 0xFF; // MS data
+    setHVBuffer[2] = 0xF0; // LS data; last 4 bits are don't care
+    pHV = setHVBuffer;
+    
+    set_HV(pHV);
+    
+    // configure pins
+    HV_ON_OFF_SetDigitalOutput();
+    HV_ON_OFF_SetHigh();
+    
+    /* Read from photodiode (ADC) */
+    
+    
+    /* Communication with trigger board (SPI) */
+    
     
     /*
      *      HIH6030 Relative Humidity & Temperature Sensor
@@ -74,11 +150,9 @@ int main(void)
 //    I2C1_MESSAGE_STATUS i2cStatus;
 //    HIH6030_Write(0xA0, 0x0000, &i2cStatus);
 //    while (i2cStatus != I2C1_MESSAGE_COMPLETE);
-
     /* Read/Write from EEPROM location */
 //    uint8_t cmdmodeData[3], *pD;
 //    pD = cmdmodeData;
-
 //    HIH6030_Read(0x18, pD); // Alarm_High_On
 
 
@@ -96,7 +170,7 @@ int main(void)
         CAN1_ReceiveEnable();
         
         CAN1_receive(pRxCANmsg);
-        while (C1RXFUL1 == 0x0000)
+        while (C1RXFUL1 == 0x0000)          // #TODO: fix this
         {
             if (C1RXFUL1bits.RXFUL1 == 0) // if specific register is empty
                 break;
@@ -111,6 +185,8 @@ int main(void)
         pHum = &H_dat;
         pTemp = &T_dat; 
         uint8_t _status;
+        
+        // LV variables
         
         switch(msgID)
         {
@@ -140,11 +216,49 @@ int main(void)
                 CAN1_transmit(msg_prio, pTxCANmsg);
                 while (C1TR01CONbits.TXREQ0 == 1);
                 
+                msgID = 0x00;
                 break;
-
-            case 0x100: // Power shut-off request
-                // do something here
+            
+            case 0x001: // Turn off LV request
+                LV_ON_OFF_SetDigitalOutput();
+                LV_ON_OFF_SetLow();
+                
+                msgID = 0x00;
                 break;
+            
+            case 0x002: // Turn on LV request
+                LV_ON_OFF_SetDigitalOutput();
+                LV_ON_OFF_SetHigh();
+                
+                msgID = 0x00;
+                break;
+            
+            case 0x003: // Turn off HV request
+                // set HV_Ctrl HV value to 0
+                
+                // configure pins
+                HV_ON_OFF_SetDigitalOutput();
+                HV_ON_OFF_SetLow();
+                
+                msgID = 0x00;
+                break;
+            
+            case 0x004: // Turn on HV request
+                // set HV_Ctrl HV value
+                
+                // configure pins
+                HV_ON_OFF_SetDigitalOutput();
+                HV_ON_OFF_SetHigh();
+                
+                msgID = 0x00;
+                break;
+            
+            case 0x005: // Set HV but do not turn on? Do we want this?
+                // set HV_Ctrl HV value
+                
+                msgID = 0x00;
+                break;
+        
         }
 
         /* Make RH&T measurement, fetch results from HIH6030-021 sensor */
@@ -172,7 +286,7 @@ int main(void)
 //                printf("Diagnostic, or Invalid Data.\n");
 //                // send warning to RP
 //                break;
-//        } // end RH&T sensor
+//        } // end RH&T measurement
 
     } // end main while loop
 
@@ -182,4 +296,3 @@ int main(void)
 /**
  End of File
 */
-
