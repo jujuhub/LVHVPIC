@@ -54,16 +54,73 @@
 /*
                          Local functions
  */
+#include <stdbool.h>
+
 #define LTC2631_ADDR 0x73
 #define LTC2631_I2C_TIMEOUT 255
 #define LTC2631_MAX_RETRY 255
+
+void init_LTC2631()
+{
+    /**
+     *  @Summary
+     *      Select type of reference voltage, internal or external
+     *  @Param
+     *      refV: internal (1) or external (0)
+     *  @Return
+     *      none
+     */
+    
+    bool refV = true;
+    uint8_t cmd;
+    
+    if (refV)
+        cmd = 0x60;         // INTERNAL reference; last 4 bits are don't care
+    else
+        cmd = 0x70;         // EXTERNAL reference; last 4 bits are don't care
+    
+    uint16_t slaveTimeOut = 0, retryTimeOut = 0;
+    uint8_t cmdBuffer[3], pCmd;
+    cmdBuffer[0] = cmd;
+    cmdBuffer[1] = 0x00;
+    cmdBuffer[2] = 0x00;
+    
+    I2C1_MESSAGE_STATUS i2c_stat;
+    i2c_stat = I2C1_MESSAGE_PENDING;
+    
+    /* Initiate communication with DAC & transmit data (3 bytes) */
+    while (i2c_stat != I2C1_MESSAGE_COMPLETE)
+    {
+        I2C1_MasterWrite(cmdBuffer, 3, LTC2631_ADDR, &i2c_stat);
+        
+        while (i2c_stat == I2C1_MESSAGE_PENDING)
+        {
+            // check for timeout
+            if (slaveTimeOut == LTC2631_I2C_TIMEOUT)
+                break;
+            else
+                slaveTimeOut++;
+        }
+        
+        // check for max retry
+        if (retryTimeOut == LTC2631_MAX_RETRY)
+            break;
+        else
+            retryTimeOut++;
+        
+        // if transmission failed (or ACK was not received from slave device)
+        if (i2c_stat == I2C1_MESSAGE_FAIL)
+            // do something else?
+            break;
+    }
+}
 
 void set_HV(uint8_t *pHV)
 {
     /**
      *  @Summary
-     *      Send nominal HV value to LTC2631 (DAC), which in turn sets the HV 
-     *      for C40N (DC-HVDC converter)
+     *      Send nominal HV value to LTC2631 (DAC) via I2C, which in turn sets 
+     *      the HV for C40N (DC-HVDC converter)
      *  @Param
      *      pHV: pointer to array containing HV set value in 3 bytes
      *  @Return
@@ -72,9 +129,9 @@ void set_HV(uint8_t *pHV)
 
     uint16_t retryTimeOut = 0, slaveTimeOut = 0;
     uint8_t setHVBuffer[3];
-    setHVBuffer[0] = *pHV; // command
-    setHVBuffer[1] = *(pHV + 1); // MS data
-    setHVBuffer[2] = *(pHV + 2); // LS data; last 4 bits are don't care
+    setHVBuffer[0] = *pHV;          // command
+    setHVBuffer[1] = *(pHV + 1);    // MS data
+    setHVBuffer[2] = *(pHV + 2);    // LS data; last 4 bits are don't care
     
     I2C1_MESSAGE_STATUS i2c_stat;
     i2c_stat = I2C1_MESSAGE_PENDING;
@@ -119,22 +176,53 @@ int main(void)
     INTERRUPT_GlobalEnable();
     
     /* Turn on LV (set pin as output high) */
-    LV_ON_OFF_SetDigitalOutput();
-    LV_ON_OFF_SetHigh();
+//    LV_ON_OFF_SetDigitalOutput();
+//    LV_ON_OFF_SetHigh();
+//    
+//    int i = 0;
+//    while (i < 1000)
+//    {
+//        if (i == 255)
+//            break;
+//        ++i;
+//    }
+//    LV_ON_OFF_SetDigitalOutput();
+//    LV_ON_OFF_SetLow();
+//    int j = 0;
+//    while (j < 1000) // some delay
+//    {
+//        if (j == 255)
+//            break;
+//        ++j;
+//    }
+//    LV_ON_OFF_SetDigitalOutput();
+//    LV_ON_OFF_SetLow();
     
     /* Turn on HV (set pin as output high) */
     // set HV value via DAC first? if float, need to convert to hex
+//    init_LTC2631();
+    
+    /*
+     * @Commands
+     *      0b0000: Write to input register
+     *      0b0001: Update (power up) DAC register
+     *      0b0011: Write to and update (power up) DAC register
+     *      0b0100: Power down
+     *      0b0110: Select internal reference
+     *      0b0111: Select external reference
+     */
+    
     uint8_t setHVBuffer[3] = {0}, *pHV;
-    setHVBuffer[0] = 0x03; // command
-    setHVBuffer[1] = 0xFF; // MS data
-    setHVBuffer[2] = 0xF0; // LS data; last 4 bits are don't care
+    setHVBuffer[0] = 0x30; // command
+    setHVBuffer[1] = 0x26; // MS data
+    setHVBuffer[2] = 0x66; // LS data; last 4 bits are don't care
     pHV = setHVBuffer;
     
     set_HV(pHV);
     
     // configure pins
-    HV_ON_OFF_SetDigitalOutput();
-    HV_ON_OFF_SetHigh();
+//    HV_ON_OFF_SetDigitalOutput();
+//    HV_ON_OFF_SetHigh();
     
     /* Read from photodiode (ADC) */
     
@@ -169,10 +257,10 @@ int main(void)
         
         CAN1_ReceiveEnable();
         
-        CAN1_receive(pRxCANmsg);
+        CAN1_receive(pRxCANmsg);            // breakpoint here
         while (C1RXFUL1 == 0x0000)          // #TODO: fix this
         {
-            if (C1RXFUL1bits.RXFUL1 == 0) // if specific register is empty
+            if (C1RXFUL1bits.RXFUL1 == 0)   // if specific register is empty
                 break;
         }
         C1RXFUL1bits.RXFUL1 = 0;
