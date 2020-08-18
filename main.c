@@ -80,8 +80,8 @@ void init_LTC2631()
         cmd = 0x70;         // EXTERNAL reference; last 4 bits are don't care
     
     uint16_t slaveTimeOut = 0, retryTimeOut = 0;
-    uint8_t cmdBuffer[3], pCmd;
-    cmdBuffer[0] = cmd;
+    uint8_t cmdBuffer[3];
+    cmdBuffer[0] = 0x60;
     cmdBuffer[1] = 0x00;
     cmdBuffer[2] = 0x00;
     
@@ -115,7 +115,7 @@ void init_LTC2631()
     }
 }
 
-void set_HV(uint8_t *pHV)
+void write_LTC2631(uint8_t *pHV)
 {
     /**
      *  @Summary
@@ -126,7 +126,7 @@ void set_HV(uint8_t *pHV)
      *  @Return
      *      none
      */
-
+    
     uint16_t retryTimeOut = 0, slaveTimeOut = 0;
     uint8_t setHVBuffer[3];
     setHVBuffer[0] = *pHV;          // command
@@ -176,8 +176,8 @@ int main(void)
     INTERRUPT_GlobalEnable();
     
     /* Turn on LV (set pin as output high) */
-//    LV_ON_OFF_SetDigitalOutput();
-//    LV_ON_OFF_SetHigh();
+    LV_ON_OFF_SetDigitalOutput();
+    LV_ON_OFF_SetHigh();
 //    
 //    int i = 0;
 //    while (i < 1000)
@@ -186,8 +186,8 @@ int main(void)
 //            break;
 //        ++i;
 //    }
-//    LV_ON_OFF_SetDigitalOutput();
-//    LV_ON_OFF_SetLow();
+    LV_ON_OFF_SetDigitalOutput();
+    LV_ON_OFF_SetLow();
 //    int j = 0;
 //    while (j < 1000) // some delay
 //    {
@@ -200,7 +200,7 @@ int main(void)
     
     /* Turn on HV (set pin as output high) */
     // set HV value via DAC first? if float, need to convert to hex
-//    init_LTC2631();
+//    init_LTC2631();   // unnecessary bc 1.25V internal ref by default
     
     /*
      * @Commands
@@ -214,15 +214,26 @@ int main(void)
     
     uint8_t setHVBuffer[3] = {0}, *pHV;
     setHVBuffer[0] = 0x30; // command
-    setHVBuffer[1] = 0x26; // MS data
-    setHVBuffer[2] = 0x66; // LS data; last 4 bits are don't care
+    setHVBuffer[1] = 0xFF; // MS data
+    setHVBuffer[2] = 0xFF; // LS data; last 4 bits are don't care
     pHV = setHVBuffer;
     
-    set_HV(pHV);
+    write_LTC2631(pHV);
+    
+//    setHVBuffer[1] = 0x00;
+//    setHVBuffer[2] = 0x00;
+//    write_LTC2631(pHV);
     
     // configure pins
-//    HV_ON_OFF_SetDigitalOutput();
-//    HV_ON_OFF_SetHigh();
+    HV_ON_OFF_SetDigitalOutput();
+    HV_ON_OFF_SetHigh();
+    
+    setHVBuffer[1] = 0x00;
+    setHVBuffer[2] = 0x00;
+    write_LTC2631(pHV);
+    
+    HV_ON_OFF_SetDigitalOutput();
+    HV_ON_OFF_SetLow();
     
     /* Read from photodiode (ADC) */
     
