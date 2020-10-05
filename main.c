@@ -49,156 +49,43 @@
 #include "mcc_generated_files/mcc.h"
 #include "mcc_generated_files/interrupt_manager.h"
 
-#include "hih6030.h"
+#include "i2c_devices.h"
 
 /*
                          Local functions
  */
-#include <stdbool.h>
 
-#define LTC2631_ADDR 0x73
-#define LTC2631_I2C_TIMEOUT 255
-#define LTC2631_MAX_RETRY 255
 
-void init_LTC2631()
-{
-    /**
-     *  @Summary
-     *      Select type of reference voltage, internal or external
-     *  @Param
-     *      refV: internal (1) or external (0)
-     *  @Return
-     *      none
-     */
-    
-    bool refV = true;
-    uint8_t cmd;
-    
-    if (refV)
-        cmd = 0x60;         // INTERNAL reference; last 4 bits are don't care
-    else
-        cmd = 0x70;         // EXTERNAL reference; last 4 bits are don't care
-    
-    uint16_t slaveTimeOut = 0, retryTimeOut = 0;
-    uint8_t cmdBuffer[3];
-    cmdBuffer[0] = 0x60;
-    cmdBuffer[1] = 0x00;
-    cmdBuffer[2] = 0x00;
-    
-    I2C1_MESSAGE_STATUS i2c_stat;
-    i2c_stat = I2C1_MESSAGE_PENDING;
-    
-    /* Initiate communication with DAC & transmit data (3 bytes) */
-    while (i2c_stat != I2C1_MESSAGE_COMPLETE)
-    {
-        I2C1_MasterWrite(cmdBuffer, 3, LTC2631_ADDR, &i2c_stat);
-        
-        while (i2c_stat == I2C1_MESSAGE_PENDING)
-        {
-            // check for timeout
-            if (slaveTimeOut == LTC2631_I2C_TIMEOUT)
-                break;
-            else
-                slaveTimeOut++;
-        }
-        
-        // check for max retry
-        if (retryTimeOut == LTC2631_MAX_RETRY)
-            break;
-        else
-            retryTimeOut++;
-        
-        // if transmission failed (or ACK was not received from slave device)
-        if (i2c_stat == I2C1_MESSAGE_FAIL)
-            // do something else?
-            break;
-    }
-}
 
-void write_LTC2631(uint8_t *pHV)
-{
-    /**
-     *  @Summary
-     *      Send nominal HV value to LTC2631 (DAC) via I2C, which in turn sets 
-     *      the HV for C40N (DC-HVDC converter)
-     *  @Param
-     *      pHV: pointer to array containing HV set value in 3 bytes
-     *  @Return
-     *      none
-     */
-    
-    uint16_t retryTimeOut = 0, slaveTimeOut = 0;
-    uint8_t setHVBuffer[3];
-    setHVBuffer[0] = *pHV;          // command
-    setHVBuffer[1] = *(pHV + 1);    // MS data
-    setHVBuffer[2] = *(pHV + 2);    // LS data; last 4 bits are don't care
-    
-    I2C1_MESSAGE_STATUS i2c_stat;
-    i2c_stat = I2C1_MESSAGE_PENDING;
-    
-    /* Initiate communication with DAC & transmit data (3 bytes) */
-    while (i2c_stat != I2C1_MESSAGE_COMPLETE)
-    {
-        I2C1_MasterWrite(setHVBuffer, 3, LTC2631_ADDR, &i2c_stat);
-        
-        while (i2c_stat == I2C1_MESSAGE_PENDING)
-        {
-            // check for timeout
-            if (slaveTimeOut == LTC2631_I2C_TIMEOUT)
-                break;
-            else
-                slaveTimeOut++;
-        }
-        
-        // check for max retry
-        if (retryTimeOut == LTC2631_MAX_RETRY)
-            break;
-        else
-            retryTimeOut++;
-        
-        // if transmission failed (or ACK was not received from slave device)
-        if (i2c_stat == I2C1_MESSAGE_FAIL)
-            // do something else?
-            break;
-    }
-    
-    /* Power down DAC */
-
-}
 
 /*
                          Main application
  */
 int main(void)
 {
-    // initialize the device
+    /* Initialize the device (PIC) */
     SYSTEM_Initialize();
     INTERRUPT_GlobalEnable();
     
-    /* Turn on LV (set pin as output high) */
+    /* Turn ON LV lines (set pin output to high) */
+    // needed for I2C communication (as of Oct 1, 2020)
     LV_ON_OFF_SetDigitalOutput();
     LV_ON_OFF_SetHigh();
-//    
-//    int i = 0;
-//    while (i < 1000)
-//    {
-//        if (i == 255)
-//            break;
-//        ++i;
-//    }
-    LV_ON_OFF_SetDigitalOutput();
-    LV_ON_OFF_SetLow();
-//    int j = 0;
-//    while (j < 1000) // some delay
-//    {
-//        if (j == 255)
-//            break;
-//        ++j;
-//    }
+    
+    // some delay
+    int i = 0;
+    while (i < 1000)
+    {
+        if (i == 255) break;
+        ++i;
+    }
+    
+    /* Turn OFF LV lines (set pin output to low) */
 //    LV_ON_OFF_SetDigitalOutput();
 //    LV_ON_OFF_SetLow();
     
-    /* Turn on HV (set pin as output high) */
+    
+    /* Turn ON HV (set pin as output high) */
     // set HV value via DAC first? if float, need to convert to hex
 //    init_LTC2631();   // unnecessary bc 1.25V internal ref by default
     
@@ -218,151 +105,152 @@ int main(void)
     setHVBuffer[2] = 0xFF; // LS data; last 4 bits are don't care
     pHV = setHVBuffer;
     
-    write_LTC2631(pHV);
+    I2C_Write(LTC2631_ADDR, 3, pHV);
+    
+//    setHVBuffer[1] = 0xFF;
+//    setHVBuffer[2] = 0xFF;
+//    write_LTC2631(pHV);
+    
+    // configure pins
+//    HV_ON_OFF_SetDigitalOutput();
+//    HV_ON_OFF_SetHigh();
     
 //    setHVBuffer[1] = 0x00;
 //    setHVBuffer[2] = 0x00;
 //    write_LTC2631(pHV);
     
-    // configure pins
-    HV_ON_OFF_SetDigitalOutput();
-    HV_ON_OFF_SetHigh();
+//    HV_ON_OFF_SetDigitalOutput();
+//    HV_ON_OFF_SetLow();
     
-    setHVBuffer[1] = 0x00;
-    setHVBuffer[2] = 0x00;
-    write_LTC2631(pHV);
     
-    HV_ON_OFF_SetDigitalOutput();
-    HV_ON_OFF_SetLow();
+    /* Make RH&T measurement & fetch results from HIH6030-021 sensor */
+    uint16_t H_dat, T_dat, *pHum, *pTemp;
+    pHum = &H_dat;
+    pTemp = &T_dat; 
+    uint8_t _status;
+    
+    _status = fetch_RHT(pHum, pTemp);
+    
     
     /* Read from photodiode (ADC) */
     
     
-    /* Communication with trigger board (SPI) */
+    /* Communication with trigger board (I2C) */
+//    write_trigBd();
     
-    
-    /*
-     *      HIH6030 Relative Humidity & Temperature Sensor
-     */
-    
-    /* Enter Command Mode within 3 ms */
-//    I2C1_MESSAGE_STATUS i2cStatus;
-//    HIH6030_Write(0xA0, 0x0000, &i2cStatus);
-//    while (i2cStatus != I2C1_MESSAGE_COMPLETE);
-    /* Read/Write from EEPROM location */
-//    uint8_t cmdmodeData[3], *pD;
-//    pD = cmdmodeData;
-//    HIH6030_Read(0x18, pD); // Alarm_High_On
+    /* Turn OFF LV lines */
+    LV_ON_OFF_SetDigitalOutput();
+    LV_ON_OFF_SetLow();
 
 
     while (1)
     {
-        // Add your application code
-        
-        /* CANbus communication with Raspberry Pi + PiCAN HAT */
-
-        uCAN_MSG rxCANmsg, *pRxCANmsg, txCANmsg, *pTxCANmsg;
-        pRxCANmsg = &rxCANmsg;
-        pTxCANmsg = &txCANmsg;
-        uint32_t msgID;
-        
-        CAN1_ReceiveEnable();
-        
-        CAN1_receive(pRxCANmsg);            // breakpoint here
-        while (C1RXFUL1 == 0x0000)          // #TODO: fix this
-        {
-            if (C1RXFUL1bits.RXFUL1 == 0)   // if specific register is empty
-                break;
-        }
-        C1RXFUL1bits.RXFUL1 = 0;
-        
-        msgID = rxCANmsg.frame.id;
-        
-        // RH&T variables
-        uint16_t H_dat, T_dat, *pHum, *pTemp;
-        uint8_t humH, humL, tempH, tempL;
-        pHum = &H_dat;
-        pTemp = &T_dat; 
-        uint8_t _status;
-        
-        // LV variables
-        
-        switch(msgID)
-        {
-            case 0x123: // RH&T request
-                _status = fetch_RHT(pHum, pTemp);
-                humH = (H_dat >> 8);
-                humL = (H_dat & 0xFF);
-                tempH = (T_dat >> 8);
-                tempL = (T_dat & 0xFF);
-                
-                txCANmsg.frame.id = 0x123;
-                txCANmsg.frame.idType = CAN_FRAME_STD;
-                txCANmsg.frame.msgtype = CAN_MSG_DATA;
-                txCANmsg.frame.dlc = 0b1000;
-                txCANmsg.frame.data0 = _status;
-                txCANmsg.frame.data1 = humH;
-                txCANmsg.frame.data2 = humL;
-                txCANmsg.frame.data3 = tempH;
-                txCANmsg.frame.data4 = tempL;
-                txCANmsg.frame.data5 = 0x00;
-                txCANmsg.frame.data6 = 0x00;
-                txCANmsg.frame.data7 = 0x00;
-
-                CAN1_TransmitEnable();
-
-                CAN_TX_PRIOIRTY msg_prio = CAN_PRIORITY_MEDIUM;
-                CAN1_transmit(msg_prio, pTxCANmsg);
-                while (C1TR01CONbits.TXREQ0 == 1);
-                
-                msgID = 0x00;
-                break;
-            
-            case 0x001: // Turn off LV request
-                LV_ON_OFF_SetDigitalOutput();
-                LV_ON_OFF_SetLow();
-                
-                msgID = 0x00;
-                break;
-            
-            case 0x002: // Turn on LV request
-                LV_ON_OFF_SetDigitalOutput();
-                LV_ON_OFF_SetHigh();
-                
-                msgID = 0x00;
-                break;
-            
-            case 0x003: // Turn off HV request
-                // set HV_Ctrl HV value to 0
-                
-                // configure pins
-                HV_ON_OFF_SetDigitalOutput();
-                HV_ON_OFF_SetLow();
-                
-                msgID = 0x00;
-                break;
-            
-            case 0x004: // Turn on HV request
-                // set HV_Ctrl HV value
-                
-                // configure pins
-                HV_ON_OFF_SetDigitalOutput();
-                HV_ON_OFF_SetHigh();
-                
-                msgID = 0x00;
-                break;
-            
-            case 0x005: // Set HV but do not turn on? Do we want this?
-                // set HV_Ctrl HV value
-                
-                msgID = 0x00;
-                break;
-        
-        }
+//        // Add your application code
+//        
+//        /* CANbus communication with Raspberry Pi + PiCAN HAT */
+//
+//        uCAN_MSG rxCANmsg, *pRxCANmsg, txCANmsg, *pTxCANmsg;
+//        pRxCANmsg = &rxCANmsg;
+//        pTxCANmsg = &txCANmsg;
+//        uint32_t msgID;
+//        
+//        CAN1_ReceiveEnable();
+//        
+//        CAN1_receive(pRxCANmsg);            // breakpoint here
+//        while (C1RXFUL1 == 0x0000)          // #TODO: fix this
+//        {
+//            if (C1RXFUL1bits.RXFUL1 == 0)   // if specific register is empty
+//                break;
+//        }
+//        C1RXFUL1bits.RXFUL1 = 0;
+//        
+//        msgID = rxCANmsg.frame.id;
+//        
+//        // RH&T variables
+//        uint16_t H_dat, T_dat, *pHum, *pTemp;
+//        uint8_t humH, humL, tempH, tempL;
+//        pHum = &H_dat;
+//        pTemp = &T_dat; 
+//        uint8_t _status;
+//        
+//        // LV variables
+//        
+//        switch(msgID)
+//        {
+//            case 0x123: // RH&T request
+//                _status = fetch_RHT(pHum, pTemp);
+//                humH = (H_dat >> 8);
+//                humL = (H_dat & 0xFF);
+//                tempH = (T_dat >> 8);
+//                tempL = (T_dat & 0xFF);
+//                
+//                txCANmsg.frame.id = 0x123;
+//                txCANmsg.frame.idType = CAN_FRAME_STD;
+//                txCANmsg.frame.msgtype = CAN_MSG_DATA;
+//                txCANmsg.frame.dlc = 0b1000;
+//                txCANmsg.frame.data0 = _status;
+//                txCANmsg.frame.data1 = humH;
+//                txCANmsg.frame.data2 = humL;
+//                txCANmsg.frame.data3 = tempH;
+//                txCANmsg.frame.data4 = tempL;
+//                txCANmsg.frame.data5 = 0x00;
+//                txCANmsg.frame.data6 = 0x00;
+//                txCANmsg.frame.data7 = 0x00;
+//
+//                CAN1_TransmitEnable();
+//
+//                CAN_TX_PRIOIRTY msg_prio = CAN_PRIORITY_MEDIUM;
+//                CAN1_transmit(msg_prio, pTxCANmsg);
+//                while (C1TR01CONbits.TXREQ0 == 1);
+//                
+//                msgID = 0x00;
+//                break;
+//            
+//            case 0x001: // Turn off LV request
+//                LV_ON_OFF_SetDigitalOutput();
+//                LV_ON_OFF_SetLow();
+//                
+//                msgID = 0x00;
+//                break;
+//            
+//            case 0x002: // Turn on LV request
+//                LV_ON_OFF_SetDigitalOutput();
+//                LV_ON_OFF_SetHigh();
+//                
+//                msgID = 0x00;
+//                break;
+//            
+//            case 0x003: // Turn off HV request
+//                // set HV_Ctrl HV value to 0
+//                
+//                // configure pins
+//                HV_ON_OFF_SetDigitalOutput();
+//                HV_ON_OFF_SetLow();
+//                
+//                msgID = 0x00;
+//                break;
+//            
+//            case 0x004: // Turn on HV request
+//                // set HV_Ctrl HV value
+//                
+//                // configure pins
+//                HV_ON_OFF_SetDigitalOutput();
+//                HV_ON_OFF_SetHigh();
+//                
+//                msgID = 0x00;
+//                break;
+//            
+//            case 0x005: // Set HV but do not turn on? Do we want this?
+//                // set HV_Ctrl HV value
+//                
+//                msgID = 0x00;
+//                break;
+//        
+//        } // end switch-case for CAN
 
         /* Make RH&T measurement, fetch results from HIH6030-021 sensor */
 //        _status = fetch_RHT(pHum, pTemp);
-//
+
 //        switch(_status) // should use this to send CAN messages to Raspberry Pi
 //        {
 //            case 0:
@@ -385,8 +273,8 @@ int main(void)
 //                printf("Diagnostic, or Invalid Data.\n");
 //                // send warning to RP
 //                break;
-//        } // end RH&T measurement
-
+//        } // end swtich-case for RH&T
+        
     } // end main while loop
 
     return 1; 
