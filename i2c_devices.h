@@ -24,19 +24,27 @@
 
 #define HIH6030_ADDR 0x27
 #define LTC2631_ADDR 0x73
-#define MCP4725_DAC0_ADDR 0x60
-#define MCP4725_DAC1_ADDR 0x61
+#define MCP4725_DAC0_ADDR 0x60  // channel comparator DAC
+#define MCP4725_DAC1_ADDR 0x61  // multiplicity comparator DAC
 
 
 /****************************************************************************
  *
  * Function:        I2C_Write
- * Description:     Simple function to write data to I2C devices
+ * Description:     Generic write function to send data to I2C devices
  * 
- * Return Value:    none
+ * Return Value:    Status of I2C message
+ *                      I2C1_MESSAGE_FAIL
+ *                      I2C1_MESSAGE_PENDING
+ *                      I2C1_MESSAGE_COMPLETE
+ *                      I2C1_STUCK_START
+ *                      I2C1_MESSAGE_ADDRESS_NO_ACK
+ *                      I2C1_DATA_NO_ACK
+ *                      I2C1_LOST_STATE
  *
  ****************************************************************************/
-void I2C_Write(uint8_t addr, uint8_t nbytes, uint8_t *pData);
+I2C1_MESSAGE_STATUS I2C_Write(uint8_t addr, uint8_t nbytes, uint8_t *pData);
+
 
 /****************************************************************************
  * 
@@ -48,34 +56,17 @@ void I2C_Write(uint8_t addr, uint8_t nbytes, uint8_t *pData);
  *                      00 - Normal Operation
  *                      01 - Stale Data
  *                      10 - Command Mode (should not happen under Normal Op)
+ *                      11 - Failed Measurement
  * 
  ****************************************************************************/
-uint8_t fetch_RHT(uint16_t *pHum, uint16_t *pTemp);
+uint8_t fetch_RHT(uint8_t *pData);
 
-/****************************************************************************
- *
- * Function:        HIH6030_Write
- * Description:     Write to HIH6030 sensor during Command Mode
- * 
- * Return Value:    None
- * 
- ****************************************************************************/
-void HIH6030_Write(uint8_t command, uint16_t dat, I2C1_MESSAGE_STATUS *pstatus);
-
-/****************************************************************************
- * 
- * Function:        HIH6030_Read
- * Description:     Read Command Mode data from HIH6030 sensor
- * 
- * Return Value:    None
- *
- ****************************************************************************/
-void HIH6030_Read(uint8_t command, uint8_t *pData);
 
 /****************************************************************************
  *
  * Function:        init_LTC2631
- * Description:     
+ * Description:     Initializes the LTC2631 DAC; selects reference voltage 
+ *                  type (external or internal)
  *
  * Return Value:    None
  ****************************************************************************/
