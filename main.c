@@ -54,7 +54,8 @@
 /*
                          Local functions
  */
-
+#define DISABLED 0
+#define ENABLED 1
 
 
 /*
@@ -66,18 +67,42 @@ int main(void)
     SYSTEM_Initialize();
     INTERRUPT_GlobalEnable();
     
+    int i = 0;
+    for (i = 0; i < 255; ++i);
+    
+    /* Make sure LV and HV are OFF */
+    LV_ON_OFF_SetDigitalOutput();
+    LV_ON_OFF_SetLow();
+    uint16_t LV_EN; 
+    LV_EN = LV_ON_OFF_GetValue(); // what values does this give back? 
+    while (LV_EN != DISABLED)
+    {
+        LV_ON_OFF_SetLow();
+        LV_EN = LV_ON_OFF_GetValue();
+    }
+    
+    HV_ON_OFF_SetDigitalOutput();
+    HV_ON_OFF_SetLow();
+    uint16_t HV_EN;
+    HV_EN = HV_ON_OFF_GetValue();
+    while (HV_EN != DISABLED)
+    {
+        HV_ON_OFF_SetLow();
+        HV_EN = HV_ON_OFF_GetValue();
+    }
+
+/////////////////////////////////////////////////////////////////////////////    
     /* Turn ON LV lines */
     // needed for I2C communication (as of Oct 1, 2020)
-    LV_ON_OFF_SetDigitalOutput();
-    LV_ON_OFF_SetHigh();
+//    LV_ON_OFF_SetDigitalOutput();
+//    LV_ON_OFF_SetHigh();
     
     // some delay; necessary?
-    int i = 0;
-    while (i < 1000)
-    {
-        if (i == 255) break;
-        ++i;
-    }
+//    while (i < 255)
+//    {
+//        if (i == 254) break;
+//        ++i;
+//    }
 
     /* Turn ON HV (set pin as output high) */
     // set HV value via DAC first? if float, need to convert to hex
@@ -145,36 +170,25 @@ int main(void)
 
 
     /* Read from photodiode (ADC) */
-    
-    
-    /* Scan for I2C device addresses */
-//    I2C1_MESSAGE_STATUS status;
-//    uint8_t ad, ndev = 0;
-//    uint8_t dummy[2] = {0}, *pDummy;
-//    pDummy = dummy;
-//    
-//    for (ad = 0x50; ad <= 0x73; ++ad)
-//    {
-//        status = I2C_Write(ad, 2, pDummy);
-//        
-//        if (status == I2C1_MESSAGE_COMPLETE)
-//            ++ndev;
-//    }
+
 
     
     /* Turn OFF LV lines */
 //    LV_ON_OFF_SetDigitalOutput();
 //    LV_ON_OFF_SetLow();
-    
+/////////////////////////////////////////////////////////////////////////////
+
     while (1)
     {
         // Add your application code
         
         /* CANbus communication with Raspberry Pi + PiCAN HAT */
+        // declare CAN msg variables
         uCAN_MSG rxCANmsg, *pRxCANmsg, txCANmsg, *pTxCANmsg;
         pRxCANmsg = &rxCANmsg;
         pTxCANmsg = &txCANmsg;
-        uint32_t msgID;
+        uint32_t msgID = 0x00;
+        CAN_TX_PRIOIRTY msg_prio = CAN_PRIORITY_MEDIUM;
         
         CAN1_ReceiveEnable();
         
@@ -184,27 +198,32 @@ int main(void)
             if (C1RXFUL1bits.RXFUL1 == 0)   // if specific register is empty
                 break;
         }
-        C1RXFUL1bits.RXFUL1 = 0;
+        C1RXFUL1bits.RXFUL1 = 0; // need to clear out the buffers?
         
         msgID = rxCANmsg.frame.id;
         
         // RH&T variables
-        uint8_t sensorData[4], *pData;
+        uint8_t sensorData[4] = {0}, *pData;
         uint8_t humH, humL, tempH, tempL;
         pData = sensorData;
         uint8_t _status;
         
         // LV variables
+        
+        // HV variables
+        uint8_t setHVBuffer[3] = {0}, *pHV;
+        pHV = setHVBuffer;
+        
 
         switch(msgID)
         {
+            /********* HUMIDITY & TEMPERATURE *********/
             case 0x123: // RH&T request
                 _status = fetch_RHT(pData);
                 humH = sensorData[0];
                 humL = sensorData[1];
                 tempH = sensorData[2];
-                tempL = sensorData[3];
-                
+                tempL = sensorData[3];                
                 txCANmsg.frame.id = 0x123;
                 txCANmsg.frame.idType = CAN_FRAME_STD;
                 txCANmsg.frame.msgtype = CAN_MSG_DATA;
@@ -217,62 +236,112 @@ int main(void)
                 txCANmsg.frame.data5 = 0x00;
                 txCANmsg.frame.data6 = 0x00;
                 txCANmsg.frame.data7 = 0x00;
-
                 CAN1_TransmitEnable();
-
-                CAN_TX_PRIOIRTY msg_prio = CAN_PRIORITY_MEDIUM;
-                int c;
-                for (c = 0; c < 100; c++)
-                {
-                    CAN1_transmit(msg_prio, pTxCANmsg);
-                    while (C1TR01CONbits.TXREQ0 == 1);
-                }
-                
+                CAN1_transmit(msg_prio, pTxCANmsg);
+                while (C1TR01CONbits.TXREQ0 == 1);
                 msgID = 0x00;
-                CAN1_ReceiveEnable();
+                CAN1_ReceiveEnable(); // test this outside of switch-statement
                 break;
             
-            case 0x001: // Turn OFF LV request
+            /********* LOW VOLTAGE *********/
+            case 0x010: // Turn OFF LV request
                 LV_ON_OFF_SetDigitalOutput();
                 LV_ON_OFF_SetLow();
-                
+                LV_EN = LV_ON_OFF_GetValue();
+                while (LV_EN != DISABLED)
+                {
+                    LV_ON_OFF_SetLow();
+                    LV_EN = LV_ON_OFF_GetValue();
+                }
+                txCANmsg.frame.id = 0x011;
+                txCANmsg.frame.idType = CAN_FRAME_STD;
+                txCANmsg.frame.msgtype = CAN_MSG_DATA;
+                txCANmsg.frame.dlc = 0b1000;
+                txCANmsg.frame.data0 = (LV_EN >> 8); // high part
+                txCANmsg.frame.data1 = (uint8_t)(LV_EN); // low part
+                txCANmsg.frame.data2 = 0x00;
+                txCANmsg.frame.data3 = 0x00;
+                txCANmsg.frame.data4 = 0x00;
+                txCANmsg.frame.data5 = 0x00;
+                txCANmsg.frame.data6 = 0x00;
+                txCANmsg.frame.data7 = 0x00;
+                CAN1_TransmitEnable();
+                CAN1_transmit(msg_prio, pTxCANmsg);
+                while (C1TR01CONbits.TXREQ0 == 1);
                 msgID = 0x00;
                 break;
             
-            case 0x002: // Turn ON LV request
+            case 0x020: // Turn ON LV request
                 LV_ON_OFF_SetDigitalOutput();
                 LV_ON_OFF_SetHigh();
-                
+                LV_EN = LV_ON_OFF_GetValue();
+                while (LV_EN != ENABLED)
+                {
+                    LV_ON_OFF_SetHigh();
+                    LV_EN = LV_ON_OFF_GetValue();
+                }
+                txCANmsg.frame.id = 0x021;
+                txCANmsg.frame.idType = CAN_FRAME_STD;
+                txCANmsg.frame.msgtype = CAN_MSG_DATA;
+                txCANmsg.frame.dlc = 0b1000;
+                txCANmsg.frame.data0 = (LV_EN >> 8); // high part
+                txCANmsg.frame.data1 = (uint8_t)(LV_EN); // low part
+                txCANmsg.frame.data2 = 0x00;
+                txCANmsg.frame.data3 = 0x00;
+                txCANmsg.frame.data4 = 0x00;
+                txCANmsg.frame.data5 = 0x00;
+                txCANmsg.frame.data6 = 0x00;
+                txCANmsg.frame.data7 = 0x00;
+                CAN1_TransmitEnable();
+                CAN1_transmit(msg_prio, pTxCANmsg);
+                while (C1TR01CONbits.TXREQ0 == 1);
                 msgID = 0x00;
                 break;
             
-            case 0x003: // Turn off HV request
+            /********* HIGH VOLTAGE *********/
+            case 0x030: // Turn off HV request
                 // set HV_Ctrl HV value to 0
-                
                 // configure pins
                 HV_ON_OFF_SetDigitalOutput();
                 HV_ON_OFF_SetLow();
-                
+                HV_EN = HV_ON_OFF_GetValue();
+                while (HV_EN != DISABLED)
+                {
+                    HV_ON_OFF_SetLow();
+                    HV_EN = HV_ON_OFF_GetValue();
+                }
                 msgID = 0x00;
                 break;
             
-            case 0x004: // Turn on HV request
+            case 0x040: // Turn on HV request
                 // set HV_Ctrl HV value
-                
                 // configure pins
                 HV_ON_OFF_SetDigitalOutput();
                 HV_ON_OFF_SetHigh();
-                
+                HV_EN = HV_ON_OFF_GetValue();
+                while (HV_EN != ENABLED)
+                {
+                    HV_ON_OFF_SetHigh();
+                    HV_EN = HV_ON_OFF_GetValue();
+                }
                 msgID = 0x00;
                 break;
             
-            case 0x005: // Set HV but do not turn on? Do we want this?
+            case 0x050: // Set the HV % (write to DAC)
                 // set HV_Ctrl HV value
-                
+                setHVBuffer[0] = 0x30; // command
+                setHVBuffer[1] = rxCANmsg.frame.data0; // MS data
+                setHVBuffer[2] = rxCANmsg.frame.data1; // LS data; last 4 bits are don't care
+                I2C_Write(LTC2631_ADDR, 3, pHV);
+                // extract data from CAN msg and send to DAC
                 msgID = 0x00;
                 break;
         
         } // end switch-case for CAN
+        
+        int j;
+        for (j = 0; j < 10; j++);
+        msgID = 0x00;
     }
     return 1; 
 }
