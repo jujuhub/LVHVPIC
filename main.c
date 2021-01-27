@@ -454,7 +454,7 @@ int main(void)
                 setTrigBuffer[2] = rxCANmsg.frame.data1;
                 while (_I2C_status != I2C1_MESSAGE_COMPLETE)
                 {
-                    _I2C_status = I2C_Write(MCP4725_DAC0_ADDR, 3, pSetTrig);
+                    I2C_Write(MCP4725_DAC0_ADDR, 3, pSetTrig);
                     
                     retryTimeOut++;
                     if (retryTimeOut == MAX_RETRY)
@@ -527,7 +527,7 @@ int main(void)
                 setTrigBuffer[2] = rxCANmsg.frame.data1;
                 while (_I2C_status != I2C1_MESSAGE_COMPLETE)
                 {
-                    _I2C_status = I2C_Write(MCP4725_DAC1_ADDR, 3, pSetTrig);
+                    I2C_Write(MCP4725_DAC1_ADDR, 3, pSetTrig);
                     
                     retryTimeOut++;
                     if (retryTimeOut == MAX_RETRY)
