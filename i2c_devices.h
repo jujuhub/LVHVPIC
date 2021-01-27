@@ -45,6 +45,22 @@
  ****************************************************************************/
 I2C1_MESSAGE_STATUS I2C_Write(uint8_t addr, uint8_t nbytes, uint8_t *pData);
 
+/****************************************************************************
+ *
+ * Function:        I2C_Read
+ * Description:     Generic read function to receive data from I2C devices
+ * 
+ * Return Value:    Status of I2C message
+ *                      I2C1_MESSAGE_FAIL
+ *                      I2C1_MESSAGE_PENDING
+ *                      I2C1_MESSAGE_COMPLETE
+ *                      I2C1_STUCK_START
+ *                      I2C1_MESSAGE_ADDRESS_NO_ACK
+ *                      I2C1_DATA_NO_ACK
+ *                      I2C1_LOST_STATE
+ *
+ ****************************************************************************/
+I2C1_MESSAGE_STATUS I2C_Read(uint8_t addr, uint8_t nbytes, uint8_t *pData);
 
 /****************************************************************************
  * 

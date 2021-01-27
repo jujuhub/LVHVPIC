@@ -60,6 +60,55 @@ I2C1_MESSAGE_STATUS I2C_Write(uint8_t addr, uint8_t nbytes, uint8_t *pData)
     return i2c_stat;
 }
 
+I2C1_MESSAGE_STATUS I2C_Read(uint8_t addr, uint8_t nbytes, uint8_t *pData)
+{
+    /**
+     *  @Summary
+     *      Simple I2C read function that READS nbytes of data to device with
+     *      7-bit address (addr)
+     *      Length of array must match nbytes and each element must be 1 byte 
+     *      (8 bits) in size
+     *  @Param
+     *      addr: 7-bit device address
+     *      nbytes: number of bytes to send; must match length of pData array
+     *      pData: pointer to array holding data
+     *  @Return
+     *      i2c_stat: status of I2C message sent to device
+     */
+    
+    uint16_t retryTimeOut = 0, slaveTimeOut = 0;
+    
+    I2C1_MESSAGE_STATUS i2c_stat;
+    i2c_stat = I2C1_MESSAGE_PENDING;
+    
+    /* Initiate communication with device & receive (n bytes) of data */
+    while (i2c_stat != I2C1_MESSAGE_COMPLETE)
+    {
+        I2C1_MasterRead(pData, nbytes, addr, &i2c_stat);
+        
+        while (i2c_stat == I2C1_MESSAGE_PENDING)
+        {
+            // check for timeout
+            if (slaveTimeOut == I2C_TIMEOUT)
+                break;
+            else
+                slaveTimeOut++;
+        }
+        
+        // check for max retry
+        if (retryTimeOut == I2C_MAX_RETRY)
+            break;
+        else
+            retryTimeOut++;
+        
+        // if transmission failed or ACK was not received from any device
+        if (i2c_stat == I2C1_MESSAGE_FAIL || i2c_stat == I2C1_DATA_NO_ACK)
+            return i2c_stat;
+    }
+    
+    return i2c_stat;
+}
+
 uint8_t fetch_RHT(uint8_t *pData)
 {
     /**
@@ -72,9 +121,10 @@ uint8_t fetch_RHT(uint8_t *pData)
      */
 
     /* Declare variables */
-    uint8_t writeBuffer[1], sensorData[4] = {0}, _status, *pD;
+    uint8_t writeBuffer[1], _status;
+//    uint8_t sensorData[4] = {0}, *pD;
+//    pD = sensorData;
     uint16_t retryTimeOut = 0, slaveTimeOut = 0;
-    pD = sensorData;
     writeBuffer[0] = (HIH6030_ADDR << 1); // dummy data
 
     I2C1_MESSAGE_STATUS i2cStatus;
@@ -105,6 +155,10 @@ uint8_t fetch_RHT(uint8_t *pData)
             _status = 0x03;
             break;
     }
+    
+    // delay btwn MR and data fetch
+    int dt;
+    for (dt = 0; dt < 10; dt++);
 
     /* Fetch the RH & T data (4 bytes) */
     if (i2cStatus == I2C1_MESSAGE_COMPLETE)
@@ -114,12 +168,10 @@ uint8_t fetch_RHT(uint8_t *pData)
         
         while (i2cStatus != I2C1_MESSAGE_FAIL)
         {
-            I2C1_MasterRead(pD, 4, HIH6030_ADDR, &i2cStatus);
+            I2C1_MasterRead(pData, 4, HIH6030_ADDR, &i2cStatus);
             
             while (i2cStatus == I2C1_MESSAGE_PENDING)
             {
-                // add delay here
-                
                 // check for timeout
                 if (slaveTimeOut == I2C_TIMEOUT)
                     break;
@@ -180,13 +232,11 @@ uint8_t fetch_RHT(uint8_t *pData)
 //    }
 
     /* Get status of data (first 2 bits) */
-    _status = (sensorData[0] >> 6) & 0x03;
-    pData = sensorData;
+    _status = (*pData >> 6) & 0x03; //(sensorData[0] >> 6) & 0x03;
 
     /* Convert RH&T counts to float */
 //    H_dat = (sensorData[0] & 0x3F)*256 + sensorData[1]; // #TODO: FIX CONVERSIONS
 //    T_dat = (sensorData[2]*256 + sensorData[3]) >> 2;
-//
 //    *pHum = H_dat; ///16382. * 100.; // %RH
 //    *pTemp = T_dat; ///16382.*165. - 40.; // degrees C
 
