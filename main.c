@@ -449,12 +449,12 @@ int main(void)
             /******************* TRIGGER BOARD *******************/
             case 0x0AB: // Set trigger threshold of DAC0 (channel comparator)
                 // extract data from CAN msg and send to DAC
-                setTrigBuffer[0] = rxCANmsg.frame.data0;
-                setTrigBuffer[1] = rxCANmsg.frame.data1;
-                setTrigBuffer[2] = rxCANmsg.frame.data2;
+                setTrigBuffer[0] = 0x60; // command
+                setTrigBuffer[1] = rxCANmsg.frame.data0;
+                setTrigBuffer[2] = rxCANmsg.frame.data1;
                 while (_I2C_status != I2C1_MESSAGE_COMPLETE)
                 {
-                    I2C_Write(MCP4725_DAC0_ADDR, 3, pSetTrig);
+                    _I2C_status = I2C_Write(MCP4725_DAC0_ADDR, 3, pSetTrig);
                     
                     retryTimeOut++;
                     if (retryTimeOut == MAX_RETRY)
@@ -522,12 +522,12 @@ int main(void)
                 break;
                 
             case 0x0DE: // Set trigger threshold of DAC1 (multiplicity comparator)
-                setTrigBuffer[0] = rxCANmsg.frame.data0;
-                setTrigBuffer[1] = rxCANmsg.frame.data1;
-                setTrigBuffer[2] = rxCANmsg.frame.data2;
+                setTrigBuffer[0] = 0x60; // command
+                setTrigBuffer[1] = rxCANmsg.frame.data0;
+                setTrigBuffer[2] = rxCANmsg.frame.data1;
                 while (_I2C_status != I2C1_MESSAGE_COMPLETE)
                 {
-                    I2C_Write(MCP4725_DAC1_ADDR, 3, pSetTrig);
+                    _I2C_status = I2C_Write(MCP4725_DAC1_ADDR, 3, pSetTrig);
                     
                     retryTimeOut++;
                     if (retryTimeOut == MAX_RETRY)
