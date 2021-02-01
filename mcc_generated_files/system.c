@@ -46,19 +46,18 @@
 #include "clock.h"
 #include "system.h"
 #include "system_types.h"
-#include "dma.h"
-#include "i2c1.h"
 #include "adc1.h"
-#include "can1.h"
-#include "spi1_driver.h"
 #include "interrupt_manager.h"
 #include "traps.h"
+#include "can1.h"
+#include "dma.h"
+#include "i2c1.h"
 
 void SYSTEM_Initialize(void)
 {
     PIN_MANAGER_Initialize();
-    CLOCK_Initialize();
     INTERRUPT_Initialize();
+    CLOCK_Initialize();
     I2C1_Initialize();
     ADC1_Initialize();
     CAN1_Initialize();
