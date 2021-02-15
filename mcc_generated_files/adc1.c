@@ -103,9 +103,9 @@ void ADC1_Initialize (void)
 
    AD1CSSL = 0x00;
 
-    // DMABL Allocates 1 word of buffer to each analog input; ADDMAEN disabled; 
+    // DMABL Allocates 1 word of buffer to each analog input; ADDMAEN enabled; 
 
-   AD1CON4 = 0x00;
+   AD1CON4 = 0x100;
 
     // CH123SA2 disabled; CH123SB2 CH1=OA2/AN0,CH2=AN1,CH3=AN2; CH123NA disabled; CH123NB CH1=VREF-,CH2=VREF-,CH3=VREF-; 
 

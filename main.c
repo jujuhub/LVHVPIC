@@ -166,8 +166,36 @@ int main(void)
 
 
     /* Read from photodiode (ADC) */
-
-
+//    int adcResult = 0;
+//    ADC1_ChannelSelectSet(ADC1_PHOTODIODE);
+//    ADC1_SamplingStart();
+//    for (dt = 0; dt < 1000; dt++);
+//    ADC1_SamplingStop(); // starts conversion
+//    while (!ADC1_IsConversionComplete())
+//    {
+//        adcResult = ADC1_Channel0ConversionResultGet();
+//    }
+//    
+//    ADC1_ChannelSelectSet(ADC1_VMON_3V3);
+//    ADC1_SamplingStart();
+//    for (dt = 0; dt < 1000; dt++);
+//    ADC1_SamplingStop(); // starts conversion
+//    while (!ADC1_IsConversionComplete())
+//    {
+//        adcResult = ADC1_Channel0ConversionResultGet();
+//    }
+//    
+//    LV_ON_OFF_SetDigitalOutput();
+//    LV_ON_OFF_SetHigh();
+//    
+//    ADC1_ChannelSelectSet(ADC1_VMON_3V3);
+//    ADC1_SamplingStart();
+//    for (dt = 0; dt < 1000; dt++);
+//    ADC1_SamplingStop(); // starts conversion
+//    while (!ADC1_IsConversionComplete())
+//    {
+//        adcResult = ADC1_Channel0ConversionResultGet();
+//    }
     
     /* Turn OFF LV lines */
 //    LV_ON_OFF_SetDigitalOutput();
@@ -233,6 +261,9 @@ int main(void)
         pSetTrig = setTrigBuffer;
         uint8_t readTrigBuffer[3] = {0}, *pReadTrig;
         pReadTrig = readTrigBuffer;
+        
+        // ADC variables
+        int adcResult = 0;
 
 
         switch(msgID)
@@ -586,6 +617,80 @@ int main(void)
                 txCANmsg.frame.data5 = 0x00;
                 txCANmsg.frame.data6 = 0x00;
                 txCANmsg.frame.data7 = 0x00;
+                CAN1_TransmitEnable();
+                while (!msgTXD)
+                {
+                    msgTXD = CAN1_transmit(msg_prio, pTxCANmsg);
+                }
+                msgID = 0x000;
+                break;
+                
+            case 0x00D: // Fetch photodiode value
+                ADC1_ChannelSelectSet(ADC1_PHOTODIODE);
+                ADC1_SamplingStart();
+                for (dt = 0; dt < 1000; dt++);
+                ADC1_SamplingStop(); // starts conversion
+                while (!ADC1_IsConversionComplete())
+                {
+                    adcResult = ADC1_Channel0ConversionResultGet();
+                }
+                txCANmsg.frame.id = 0x0D0;
+                txCANmsg.frame.idType = CAN_FRAME_STD;
+                txCANmsg.frame.msgtype = CAN_MSG_DATA;
+                txCANmsg.frame.dlc = 0b1000;
+                txCANmsg.frame.data0 = ((uint16_t)adcResult >> 8);
+                txCANmsg.frame.data1 = (uint8_t)(adcResult);
+                txCANmsg.frame.data2 = 0x00;
+                txCANmsg.frame.data3 = 0x00;
+                txCANmsg.frame.data4 = 0x00;
+                txCANmsg.frame.data5 = 0x00;
+                txCANmsg.frame.data6 = 0x00;
+                txCANmsg.frame.data7 = 0x00;
+                CAN1_TransmitEnable();
+                while (!msgTXD)
+                {
+                    msgTXD = CAN1_transmit(msg_prio, pTxCANmsg);
+                }
+                msgID = 0x000;
+                break;
+                
+            case 0x3AD: // Fetch low voltage values
+                ADC1_ChannelSelectSet(ADC1_VMON_3V3);
+                ADC1_SamplingStart();
+                for (dt = 0; dt < 1000; dt++);
+                ADC1_SamplingStop(); // starts conversion
+                while (!ADC1_IsConversionComplete())
+                {
+                    adcResult = ADC1_Channel0ConversionResultGet();
+                }
+                txCANmsg.frame.id = 0x3DA;
+                txCANmsg.frame.idType = CAN_FRAME_STD;
+                txCANmsg.frame.msgtype = CAN_MSG_DATA;
+                txCANmsg.frame.dlc = 0b1000;
+                txCANmsg.frame.data0 = ((uint16_t)adcResult >> 8);
+                txCANmsg.frame.data1 = (uint8_t)adcResult;
+                txCANmsg.frame.data2 = 0x00;
+                ADC1_ChannelSelectSet(ADC1_VMON_2V5);
+                ADC1_SamplingStart();
+                for (dt = 0; dt < 1000; dt++);
+                ADC1_SamplingStop(); // starts conversion
+                while (!ADC1_IsConversionComplete())
+                {
+                    adcResult = ADC1_Channel0ConversionResultGet();
+                }
+                txCANmsg.frame.data3 = ((uint16_t)adcResult >> 8);
+                txCANmsg.frame.data4 = (uint8_t)adcResult;
+                txCANmsg.frame.data5 = 0x00;
+                ADC1_ChannelSelectSet(ADC1_VMON_1V2);
+                ADC1_SamplingStart();
+                for (dt = 0; dt < 1000; dt++);
+                ADC1_SamplingStop(); // starts conversion
+                while (!ADC1_IsConversionComplete())
+                {
+                    adcResult = ADC1_Channel0ConversionResultGet();
+                }
+                txCANmsg.frame.data6 = ((uint16_t)adcResult >> 8);
+                txCANmsg.frame.data7 = (uint8_t)adcResult;
                 CAN1_TransmitEnable();
                 while (!msgTXD)
                 {
