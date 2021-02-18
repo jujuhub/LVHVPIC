@@ -59,6 +59,7 @@
 #define DISABLED 0
 #define ENABLED 1
 #define MAX_RETRY 255
+#define ADC_DELAY 500
 
 /*
                          Main application
@@ -101,16 +102,8 @@ int main(void)
     // needed for I2C communication (as of Oct 1, 2020)
 //    LV_ON_OFF_SetDigitalOutput();
 //    LV_ON_OFF_SetHigh();
-    
-    // some delay; necessary?
-//    while (i < 255)
-//    {
-//        if (i == 254) break;
-//        ++i;
-//    }
 
     /* Turn ON HV (set pin as output high) */
-    // set HV value via DAC first? if float, need to convert to hex
     
     /*
      * @Commands
@@ -127,8 +120,7 @@ int main(void)
 //    setHVBuffer[1] = 0xFF; // MS data
 //    setHVBuffer[2] = 0xFF; // LS data; last 4 bits are don't care
 //    pHV = setHVBuffer;
-//    
-////    I2C_Write(LTC2631_ADDR, 3, pHV);
+//    I2C_Write(LTC2631_ADDR, 3, pHV);
     
     // configure HV pins
 //    HV_ON_OFF_SetDigitalOutput();
@@ -143,33 +135,24 @@ int main(void)
     
     
     /* Make RH&T measurement & fetch results from HIH6030-021 sensor */
-//    while(1)
-//    {
-//        uint16_t H_dat, T_dat, *pHum, *pTemp;
-//        pHum = &H_dat;
-//        pTemp = &T_dat; 
-//        uint8_t _status;
-//
-//        _status = fetch_RHT(pHum, pTemp);
-//    }
+//    uint8_t sensorData[4] = {0}, *pData;
+//    pData = sensorData;
+//    uint8_t _status = 0x01;
+//    _status = fetch_RHT(pData);
     
     /* Communication with trigger board (I2C) */
-//    while(1)
-//    {
-//        uint8_t setTrigBuffer[2], *pTrig;
-//        setTrigBuffer[0] = 0x0F;
-//        setTrigBuffer[1] = 0xFF;
-//        pTrig = setTrigBuffer;
-//
-//        I2C_Write(MCP4725_DAC0_ADDR, 2, pTrig);
-//    }
+//    uint8_t setTrigBuffer[2], *pTrig;
+//    setTrigBuffer[0] = 0x0F;
+//    setTrigBuffer[1] = 0xFF;
+//    pTrig = setTrigBuffer;
+//    I2C_Write(MCP4725_DAC0_ADDR, 2, pTrig);
 
 
     /* Read from photodiode (ADC) */
 //    int adcResult = 0;
 //    ADC1_ChannelSelectSet(ADC1_PHOTODIODE);
 //    ADC1_SamplingStart();
-//    for (dt = 0; dt < 1000; dt++);
+//    for (dt = 0; dt < ADC_DELAY; dt++);
 //    ADC1_SamplingStop(); // starts conversion
 //    while (!ADC1_IsConversionComplete())
 //    {
@@ -178,19 +161,22 @@ int main(void)
 //    
 //    ADC1_ChannelSelectSet(ADC1_VMON_3V3);
 //    ADC1_SamplingStart();
-//    for (dt = 0; dt < 1000; dt++);
+//    for (dt = 0; dt < ADC_DELAY; dt++);
 //    ADC1_SamplingStop(); // starts conversion
 //    while (!ADC1_IsConversionComplete())
 //    {
 //        adcResult = ADC1_Channel0ConversionResultGet();
 //    }
-//    
+//    uint8_t a = (uint16_t)adcResult >> 8;
+//    uint8_t b = (uint8_t)adcResult;
+//    uint8_t c = 0;
+    
 //    LV_ON_OFF_SetDigitalOutput();
 //    LV_ON_OFF_SetHigh();
-//    
-//    ADC1_ChannelSelectSet(ADC1_VMON_3V3);
+    
+//    ADC1_ChannelSelectSet(ADC1_VMON_2V5);
 //    ADC1_SamplingStart();
-//    for (dt = 0; dt < 1000; dt++);
+//    for (dt = 0; dt < ADC_DELAY; dt++);
 //    ADC1_SamplingStop(); // starts conversion
 //    while (!ADC1_IsConversionComplete())
 //    {
@@ -207,7 +193,7 @@ int main(void)
         // Add your application code
         
         /* CANbus communication with Raspberry Pi + PiCAN HAT */
-        // declare CAN msg variables
+        // CAN msg variables
         uCAN_MSG rxCANmsg, *pRxCANmsg, txCANmsg, *pTxCANmsg;
         pRxCANmsg = &rxCANmsg;
         pTxCANmsg = &txCANmsg;
@@ -270,9 +256,12 @@ int main(void)
         {
             /******************* HUMIDITY & TEMPERATURE *******************/
             case 0x123: // RH&T request
+                dt = 0;
                 while (_status)
                 {
                     _status = fetch_RHT(pData);
+                    if (dt == 1000) break;
+                    dt++; 
                 }
                 humH = sensorData[0];
                 humL = sensorData[1];
@@ -624,13 +613,22 @@ int main(void)
                 }
                 msgID = 0x000;
                 break;
-                
+
+            /******************* ADC PERIPHERALS *******************/
             case 0x00D: // Fetch photodiode value
                 ADC1_ChannelSelectSet(ADC1_PHOTODIODE);
                 ADC1_SamplingStart();
-                for (dt = 0; dt < 1000; dt++);
+                for (dt = 0; dt < ADC_DELAY; dt++);
                 ADC1_SamplingStop(); // starts conversion
-                while (!ADC1_IsConversionComplete())
+                if (!ADC1_IsConversionComplete())
+                {
+                    while (!ADC1_IsConversionComplete())
+                    {
+                        adcResult = ADC1_Channel0ConversionResultGet();
+                    }
+                    adcResult = ADC1_Channel0ConversionResultGet();
+                }
+                else if (ADC1_IsConversionComplete())
                 {
                     adcResult = ADC1_Channel0ConversionResultGet();
                 }
@@ -638,8 +636,8 @@ int main(void)
                 txCANmsg.frame.idType = CAN_FRAME_STD;
                 txCANmsg.frame.msgtype = CAN_MSG_DATA;
                 txCANmsg.frame.dlc = 0b1000;
-                txCANmsg.frame.data0 = ((uint16_t)adcResult >> 8);
-                txCANmsg.frame.data1 = (uint8_t)(adcResult);
+                txCANmsg.frame.data0 = (uint16_t)adcResult >> 8;
+                txCANmsg.frame.data1 = (uint8_t)adcResult;
                 txCANmsg.frame.data2 = 0x00;
                 txCANmsg.frame.data3 = 0x00;
                 txCANmsg.frame.data4 = 0x00;
@@ -655,41 +653,65 @@ int main(void)
                 break;
                 
             case 0x3AD: // Fetch low voltage values
-                ADC1_ChannelSelectSet(ADC1_VMON_3V3);
-                ADC1_SamplingStart();
-                for (dt = 0; dt < 1000; dt++);
-                ADC1_SamplingStop(); // starts conversion
-                while (!ADC1_IsConversionComplete())
-                {
-                    adcResult = ADC1_Channel0ConversionResultGet();
-                }
                 txCANmsg.frame.id = 0x3DA;
                 txCANmsg.frame.idType = CAN_FRAME_STD;
                 txCANmsg.frame.msgtype = CAN_MSG_DATA;
                 txCANmsg.frame.dlc = 0b1000;
-                txCANmsg.frame.data0 = ((uint16_t)adcResult >> 8);
+                ADC1_ChannelSelectSet(ADC1_VMON_3V3); // get 3V3 reading
+                ADC1_SamplingStart();
+                for (dt = 0; dt < ADC_DELAY; dt++);
+                ADC1_SamplingStop(); // starts conversion
+                if (!ADC1_IsConversionComplete())
+                {
+                    while (!ADC1_IsConversionComplete())
+                    {
+                        adcResult = ADC1_Channel0ConversionResultGet();
+                    }
+                    adcResult = ADC1_Channel0ConversionResultGet();
+                }
+                else if (ADC1_IsConversionComplete())
+                {
+                    adcResult = ADC1_Channel0ConversionResultGet();
+                }
+                txCANmsg.frame.data0 = (uint16_t)adcResult >> 8;
                 txCANmsg.frame.data1 = (uint8_t)adcResult;
                 txCANmsg.frame.data2 = 0x00;
-                ADC1_ChannelSelectSet(ADC1_VMON_2V5);
+                ADC1_ChannelSelectSet(ADC1_VMON_2V5); // get 2V5 reading
                 ADC1_SamplingStart();
-                for (dt = 0; dt < 1000; dt++);
+                for (dt = 0; dt < ADC_DELAY; dt++);
                 ADC1_SamplingStop(); // starts conversion
-                while (!ADC1_IsConversionComplete())
+                if (!ADC1_IsConversionComplete())
+                {
+                    while (!ADC1_IsConversionComplete())
+                    {
+                        adcResult = ADC1_Channel0ConversionResultGet();
+                    }
+                    adcResult = ADC1_Channel0ConversionResultGet();
+                }
+                else if (ADC1_IsConversionComplete())
                 {
                     adcResult = ADC1_Channel0ConversionResultGet();
                 }
-                txCANmsg.frame.data3 = ((uint16_t)adcResult >> 8);
+                txCANmsg.frame.data3 = (uint16_t)adcResult >> 8;
                 txCANmsg.frame.data4 = (uint8_t)adcResult;
                 txCANmsg.frame.data5 = 0x00;
-                ADC1_ChannelSelectSet(ADC1_VMON_1V2);
+                ADC1_ChannelSelectSet(ADC1_VMON_1V2); // get 1V2 reading
                 ADC1_SamplingStart();
-                for (dt = 0; dt < 1000; dt++);
+                for (dt = 0; dt < ADC_DELAY; dt++);
                 ADC1_SamplingStop(); // starts conversion
-                while (!ADC1_IsConversionComplete())
+                if (!ADC1_IsConversionComplete())
+                {
+                    while (!ADC1_IsConversionComplete())
+                    {
+                        adcResult = ADC1_Channel0ConversionResultGet();
+                    }
+                    adcResult = ADC1_Channel0ConversionResultGet();
+                }
+                else if (ADC1_IsConversionComplete())
                 {
                     adcResult = ADC1_Channel0ConversionResultGet();
                 }
-                txCANmsg.frame.data6 = ((uint16_t)adcResult >> 8);
+                txCANmsg.frame.data6 = (uint16_t)adcResult >> 8;
                 txCANmsg.frame.data7 = (uint8_t)adcResult;
                 CAN1_TransmitEnable();
                 while (!msgTXD)
