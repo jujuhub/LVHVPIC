@@ -100,8 +100,8 @@ int main(void)
 
     /* Turn ON LV lines */
     // needed for I2C communication (as of Oct 1, 2020)
-//    LV_ON_OFF_SetDigitalOutput();
-//    LV_ON_OFF_SetHigh();
+    LV_ON_OFF_SetDigitalOutput();
+    LV_ON_OFF_SetHigh();
 
     /* Turn ON HV (set pin as output high) */
     
@@ -435,9 +435,9 @@ int main(void)
                 msgID = 0x000;
                 break;
             
-            case 0x042: // Status of HV request
+            case 0x034: // Status of HV request
                 HV_EN = HV_ON_OFF_GetValue();
-                txCANmsg.frame.id = 0x420;
+                txCANmsg.frame.id = 0x035;
                 txCANmsg.frame.idType = CAN_FRAME_STD;
                 txCANmsg.frame.msgtype = CAN_MSG_DATA;
                 txCANmsg.frame.dlc = 0b1000;
