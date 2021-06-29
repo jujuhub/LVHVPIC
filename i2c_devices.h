@@ -14,19 +14,20 @@
 #include <xc.h>
 
 #include "mcc_generated_files/i2c1.h"
+#include "mcc_generated_files/spi2.h"
 
 #ifdef	__cplusplus
     extern "C" {
 #endif
 
-#define I2C_MAX_RETRY 255       // max retry count
+#define I2C_MAX_RETRY 2         // max retry count
 #define I2C_TIMEOUT 255         // max timeout count
 
-#define HIH6030_ADDR 0x27
-#define LTC2631_ADDR 0x73
+#define HIH6030_ADDR 0x27       // humidity sensor
+#define LTC2631_ADDR 0x73       // DAC for HV
 #define MCP4725_DAC0_ADDR 0x60  // channel comparator DAC
 #define MCP4725_DAC1_ADDR 0x61  // multiplicity comparator DAC
-
+#define IMAGINARY_ADDR 0x42     // imaginary device for resets
 
 /****************************************************************************
  *

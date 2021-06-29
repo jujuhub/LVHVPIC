@@ -60,6 +60,8 @@
 #define ENABLED 1
 #define MAX_RETRY 255
 #define ADC_DELAY 500
+#define DAC_WR_DELAY 1000
+#define MR_DELAY 10000
 
 /*
                          Main application
@@ -71,7 +73,7 @@ int main(void)
     INTERRUPT_GlobalEnable();
     
     int dt = 0;
-    for (dt = 0; dt < 255; ++dt);
+    for (dt = 0; dt < 255; ++dt);   // delay
     
     /* On power up, make sure LV and HV are OFF (LAPPD is off) */
     LV_ON_OFF_SetDigitalOutput();
@@ -94,17 +96,91 @@ int main(void)
         HV_EN = HV_ON_OFF_GetValue();
     }
 
+    for (dt = 0; dt < 255; ++dt);   // delay
+    
+    /* Turn ON LV lines */
+    // needed for stable low voltage output
+    LV_ON_OFF_SetDigitalOutput();
+    LV_ON_OFF_SetHigh();
 
 /////////////////////////////////////////////////////////////////////////////
               /****************** TESTING ******************/
 
     /* Turn ON LV lines */
     // needed for I2C communication (as of Oct 1, 2020)
-    LV_ON_OFF_SetDigitalOutput();
-    LV_ON_OFF_SetHigh();
+//    LV_ON_OFF_SetDigitalOutput();
+//    LV_ON_OFF_SetHigh();
+
+    /* SPI interface with humidity sensor */
+//    while (1)
+//    {
+//    // assert slave select (SS) pin
+//    uint16_t SS_EN;
+//    SS_EN = SS2OUT_GetValue(); // SS2OUT should start high & go low to select
+//    while (SS_EN != DISABLED)
+//    {
+//        SS2OUT_SetLow();
+//        SS_EN = SS2OUT_GetValue();
+//    }
+//    
+//    // make a measurement request (MR)
+//    SPI2_STATUS spi_stat;
+//    uint8_t dummySPIwrite[4] = {0}, *pDummyWrite;
+//    pDummyWrite = dummySPIwrite;
+//    uint8_t dummySPIread[1] = {0}, *pDummyRead;
+//    pDummyRead = dummySPIread;
+//    uint16_t nBytesRcv;
+//    
+//    //SPI2_Exchange8bit(dummySPIsend);    // issue a read but ignore returned data
+//    nBytesRcv = SPI2_Exchange8bitBuffer(pDummyWrite, 1, pDummyRead);
+//
+//    SS_EN = SS2OUT_GetValue();
+//    while (SS_EN != ENABLED)
+//    {
+//        SS2OUT_SetHigh();               // deselect humidity sensor
+//        SS_EN = SS2OUT_GetValue();
+//    }
+//    for (dt = 0; dt < MR_DELAY; ++dt);       // delay before fetching results
+//    SS_EN = SS2OUT_GetValue();
+//    while (SS_EN != DISABLED)
+//    {
+//        SS2OUT_SetLow();                // select humidity sensor
+//        SS_EN = SS2OUT_GetValue();
+//    }
+//    
+//    // read humidity & temp data (4 bytes)
+//    uint8_t humH, humL, tempH, tempL; //, _status = 0x01;
+//    uint8_t readSPIrht[4] = {0}, *pSPIrht;
+//    pSPIrht = readSPIrht;
+//    spi_stat = SPI2_StatusGet();
+//    
+//    nBytesRcv = SPI2_Exchange8bitBuffer(pDummyWrite, 4, pSPIrht);
+//    humH = readSPIrht[0];
+//    humL = readSPIrht[1];
+//    tempH = readSPIrht[2];
+//    tempL = readSPIrht[3];
+//    
+////    while (spi_stat != SPI2_RECEIVE_FIFO_EMPTY)
+////    {
+////        humH = SPI2_Exchange8bit(dummySPIdata);
+////        humL = SPI2_Exchange8bit(dummySPIdata);
+////        tempH = SPI2_Exchange8bit(dummySPIdata);
+////        tempL = SPI2_Exchange8bit(dummySPIdata);        
+//        spi_stat = SPI2_StatusGet();
+////    }
+//    
+//    SS_EN = SS2OUT_GetValue();
+//    while (SS_EN != ENABLED)
+//    {
+//        SS2OUT_SetHigh();               // deselect humidity sensor
+//        SS_EN = SS2OUT_GetValue();
+//    }
+//    
+//    int long_dt;
+//    for (long_dt = 0; long_dt < 10000; ++long_dt);
+//    }
 
     /* Turn ON HV (set pin as output high) */
-    
     /*
      * @Commands
      *      0b0000: Write to input register
@@ -208,7 +284,7 @@ int main(void)
         {
             msgRXD = CAN1_receive(pRxCANmsg);
         }
-//        C1RXFUL1 = 0x0000; // clear buffer flags for ALL buffers
+//        C1RXFUL1 = 0x0000;        // clear buffer flags for ALL buffers
         
 //        CAN1_receive(pRxCANmsg);            // breakpoint here
 //        while (C1RXFUL1 == 0x0000)          // #TODO: fix this
@@ -223,7 +299,15 @@ int main(void)
         // RH&T variables
         uint8_t sensorData[4] = {0}, *pData;
         pData = sensorData;
+        uint8_t dummySPIwrite[4] = {0}, *pDummyWrite;
+        pDummyWrite = dummySPIwrite;
+        uint8_t dummySPIread[1] = {0}, *pDummyRead;
+        pDummyRead = dummySPIread;
+//        uint8_t dummyData[4] = {0}, *pDummy;
+//        pDummy = dummyData;
         uint8_t humH, humL, tempH, tempL, _status = 0x01;
+        uint16_t SS_EN;
+        uint16_t nBytesRcv = 0;
         
         // LV variables
         
@@ -256,17 +340,45 @@ int main(void)
         {
             /******************* HUMIDITY & TEMPERATURE *******************/
             case 0x123: // RH&T request
-                dt = 0;
-                while (_status)
+                // assert slave select (SS) pin
+                SS_EN = SS2OUT_GetValue(); // SS2OUT should start high & go low to select
+                while (SS_EN != DISABLED)
                 {
-                    _status = fetch_RHT(pData);
-                    if (dt == 1000) break;
-                    dt++; 
+                    SS2OUT_SetLow();
+                    SS_EN = SS2OUT_GetValue();
                 }
+                // send measurement request (MR)
+                nBytesRcv = SPI2_Exchange8bitBuffer(pDummyWrite, 1, pDummyRead);
+                // deselect humidity sensor
+                SS_EN = SS2OUT_GetValue();
+                while (SS_EN != ENABLED)
+                {
+                    SS2OUT_SetHigh();
+                    SS_EN = SS2OUT_GetValue();
+                }
+                for (dt = 0; dt < MR_DELAY; ++dt); // delay before fetching results
+                // assert SS pin
+                SS_EN = SS2OUT_GetValue();
+                while (SS_EN != DISABLED)
+                {
+                    SS2OUT_SetLow();
+                    SS_EN = SS2OUT_GetValue();
+                }
+                // read RHT
+                nBytesRcv = SPI2_Exchange8bitBuffer(pDummyWrite, 4, pData);
                 humH = sensorData[0];
                 humL = sensorData[1];
                 tempH = sensorData[2];
-                tempL = sensorData[3];                
+                tempL = sensorData[3];
+                // deselect humidity sensor
+                SS_EN = SS2OUT_GetValue();
+                while (SS_EN != ENABLED)
+                {
+                    SS2OUT_SetHigh();
+                    SS_EN = SS2OUT_GetValue();
+                }
+                _status = (sensorData[0] >> 6) & 0x03;
+                // set up CAN msg
                 txCANmsg.frame.id = 0x321;
                 txCANmsg.frame.idType = CAN_FRAME_STD;
                 txCANmsg.frame.msgtype = CAN_MSG_DATA;
@@ -462,7 +574,14 @@ int main(void)
                 setHVBuffer[0] = 0x30; // command
                 setHVBuffer[1] = rxCANmsg.frame.data0; // MS data
                 setHVBuffer[2] = rxCANmsg.frame.data1; // LS data; last 4 bits are don't care
-                I2C_Write(LTC2631_ADDR, 3, pHV); // might want to define a status variable for this...
+                while (_I2C_status != I2C1_MESSAGE_COMPLETE)
+                {
+                    I2C_Write(LTC2631_ADDR, 3, pHV);
+                    
+                    retryTimeOut++;
+                    if (retryTimeOut == MAX_RETRY)
+                        break;
+                }
                 msgID = 0x000;
                 break;
                 
@@ -483,7 +602,7 @@ int main(void)
                 // read back the voltage to confirm
                 _I2C_status = I2C1_MESSAGE_PENDING;
                 retryTimeOut = 0;
-                for (dt = 0; dt < 10; dt++);
+                for (dt = 0; dt < DAC_WR_DELAY; dt++);
                 while (_I2C_status != I2C1_MESSAGE_COMPLETE)
                 {
                     _I2C_status = I2C_Read(MCP4725_DAC0_ADDR, 3, pReadTrig);
@@ -556,7 +675,7 @@ int main(void)
                 // read back the voltage to confirm
                 _I2C_status = I2C1_MESSAGE_PENDING;
                 retryTimeOut = 0;
-                for (dt = 0; dt < 10; dt++);
+                for (dt = 0; dt < DAC_WR_DELAY; dt++);
                 while (_I2C_status != I2C1_MESSAGE_COMPLETE)
                 {
                     _I2C_status = I2C_Read(MCP4725_DAC1_ADDR, 3, pReadTrig);

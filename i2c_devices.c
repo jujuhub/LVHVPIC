@@ -122,8 +122,6 @@ uint8_t fetch_RHT(uint8_t *pData)
 
     /* Declare variables */
     uint8_t writeBuffer[1], _status;
-//    uint8_t sensorData[4] = {0}, *pD;
-//    pD = sensorData;
     uint16_t retryTimeOut = 0, slaveTimeOut = 0;
     writeBuffer[0] = (HIH6030_ADDR << 1); // dummy data
 
@@ -146,7 +144,10 @@ uint8_t fetch_RHT(uint8_t *pData)
         
         // check for max retry
         if (retryTimeOut == I2C_MAX_RETRY)
+        {
+            _status = 0x03;
             break;
+        }
         else
             retryTimeOut++;
 
@@ -158,9 +159,9 @@ uint8_t fetch_RHT(uint8_t *pData)
     
     // delay btwn MR and data fetch
     int dt;
-    for (dt = 0; dt < 10; dt++);
+    for (dt = 0; dt < 50; dt++);
 
-    /* Fetch the RH & T data (4 bytes) */
+    /* Fetch the RH&T data (4 bytes) upon successful MR */
     if (i2cStatus == I2C1_MESSAGE_COMPLETE)
     {
         retryTimeOut = 0;
@@ -196,49 +197,9 @@ uint8_t fetch_RHT(uint8_t *pData)
         _status = 0x03; // failed measurement
         return _status;
     }
-    
-    // another read after the first to see if data fetched is the same
-//    uint8_t readBuffer[4] = {0}, *pRD;
-//    pRD = readBuffer;
-//    
-//    if (i2cStatus == I2C1_MESSAGE_COMPLETE) // never calls on this bc MSG_FAIL
-//    {
-//        retryTimeOut = 0;
-//        slaveTimeOut = 0;
-//        
-//        while (i2cStatus != I2C1_MESSAGE_FAIL)
-//        {
-//            I2C1_MasterRead(pRD, 4, HIH6030_ADDR, &i2cStatus);
-//
-//            while (i2cStatus == I2C1_MESSAGE_PENDING)
-//            {
-//                // check for timeout
-//                if (slaveTimeOut == I2C_TIMEOUT)
-//                    break;
-//                else
-//                    slaveTimeOut++;
-//            }
-//
-//            // check for max retry
-//            if (retryTimeOut == I2C_MAX_RETRY)
-//                break;
-//            else
-//                retryTimeOut++;
-//
-//            // check if bytes successfully received
-//            if ((i2cStatus == I2C1_MESSAGE_COMPLETE) || (I2C1STATbits.P == 1))
-//                break;
-//        }
-//    }
 
     /* Get status of data (first 2 bits) */
     _status = (*pData >> 6) & 0x03; //(sensorData[0] >> 6) & 0x03;
-
-    /* Convert RH&T counts to float */
-//    H_dat = (sensorData[0] & 0x3F)*256 + sensorData[1]; // #TODO: FIX CONVERSIONS
-//    T_dat = (sensorData[2]*256 + sensorData[3]) >> 2;
-//    *pHum = H_dat; ///16382. * 100.; // %RH
-//    *pTemp = T_dat; ///16382.*165. - 40.; // degrees C
 
     return _status;
 
@@ -298,3 +259,8 @@ void init_LTC2631()
             break;
     }
 }
+
+/****************************************************************************
+ ********************************** SPI *************************************
+ ****************************************************************************/
+
