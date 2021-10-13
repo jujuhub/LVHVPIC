@@ -365,11 +365,11 @@
   @Example
     <code>
     // Set RA4 high (1)
-    HV_ON_OFF_SetHigh();
+    HV_MON_SetHigh();
     </code>
 
 */
-#define HV_ON_OFF_SetHigh()          _LATA4 = 1
+#define HV_MON_SetHigh()          _LATA4 = 1
 /**
   @Summary
     Sets the GPIO pin, RA4, low using LATA4.
@@ -389,11 +389,11 @@
   @Example
     <code>
     // Set RA4 low (0)
-    HV_ON_OFF_SetLow();
+    HV_MON_SetLow();
     </code>
 
 */
-#define HV_ON_OFF_SetLow()           _LATA4 = 0
+#define HV_MON_SetLow()           _LATA4 = 0
 /**
   @Summary
     Toggles the GPIO pin, RA4, using LATA4.
@@ -413,11 +413,11 @@
   @Example
     <code>
     // Toggle RA4
-    HV_ON_OFF_Toggle();
+    HV_MON_Toggle();
     </code>
 
 */
-#define HV_ON_OFF_Toggle()           _LATA4 ^= 1
+#define HV_MON_Toggle()           _LATA4 ^= 1
 /**
   @Summary
     Reads the value of the GPIO pin, RA4.
@@ -439,11 +439,11 @@
     uint16_t portValue;
 
     // Read RA4
-    postValue = HV_ON_OFF_GetValue();
+    postValue = HV_MON_GetValue();
     </code>
 
 */
-#define HV_ON_OFF_GetValue()         _RA4
+#define HV_MON_GetValue()         _RA4
 /**
   @Summary
     Configures the GPIO pin, RA4, as an input.
@@ -463,11 +463,11 @@
   @Example
     <code>
     // Sets the RA4 as an input
-    HV_ON_OFF_SetDigitalInput();
+    HV_MON_SetDigitalInput();
     </code>
 
 */
-#define HV_ON_OFF_SetDigitalInput()  _TRISA4 = 1
+#define HV_MON_SetDigitalInput()  _TRISA4 = 1
 /**
   @Summary
     Configures the GPIO pin, RA4, as an output.
@@ -487,11 +487,11 @@
   @Example
     <code>
     // Sets the RA4 as an output
-    HV_ON_OFF_SetDigitalOutput();
+    HV_MON_SetDigitalOutput();
     </code>
 
 */
-#define HV_ON_OFF_SetDigitalOutput() _TRISA4 = 0
+#define HV_MON_SetDigitalOutput() _TRISA4 = 0
 /**
   @Summary
     Sets the GPIO pin, RB0, high using LATB0.
@@ -784,6 +784,152 @@
 
 */
 #define VMON_1V2_SetDigitalOutput() _TRISB1 = 0
+/**
+  @Summary
+    Sets the GPIO pin, RB14, high using LATB14.
+
+  @Description
+    Sets the GPIO pin, RB14, high using LATB14.
+
+  @Preconditions
+    The RB14 must be set to an output.
+
+  @Returns
+    None.
+
+  @Param
+    None.
+
+  @Example
+    <code>
+    // Set RB14 high (1)
+    HV_ON_OFF_SetHigh();
+    </code>
+
+*/
+#define HV_ON_OFF_SetHigh()          _LATB14 = 1
+/**
+  @Summary
+    Sets the GPIO pin, RB14, low using LATB14.
+
+  @Description
+    Sets the GPIO pin, RB14, low using LATB14.
+
+  @Preconditions
+    The RB14 must be set to an output.
+
+  @Returns
+    None.
+
+  @Param
+    None.
+
+  @Example
+    <code>
+    // Set RB14 low (0)
+    HV_ON_OFF_SetLow();
+    </code>
+
+*/
+#define HV_ON_OFF_SetLow()           _LATB14 = 0
+/**
+  @Summary
+    Toggles the GPIO pin, RB14, using LATB14.
+
+  @Description
+    Toggles the GPIO pin, RB14, using LATB14.
+
+  @Preconditions
+    The RB14 must be set to an output.
+
+  @Returns
+    None.
+
+  @Param
+    None.
+
+  @Example
+    <code>
+    // Toggle RB14
+    HV_ON_OFF_Toggle();
+    </code>
+
+*/
+#define HV_ON_OFF_Toggle()           _LATB14 ^= 1
+/**
+  @Summary
+    Reads the value of the GPIO pin, RB14.
+
+  @Description
+    Reads the value of the GPIO pin, RB14.
+
+  @Preconditions
+    None.
+
+  @Returns
+    None.
+
+  @Param
+    None.
+
+  @Example
+    <code>
+    uint16_t portValue;
+
+    // Read RB14
+    postValue = HV_ON_OFF_GetValue();
+    </code>
+
+*/
+#define HV_ON_OFF_GetValue()         _RB14
+/**
+  @Summary
+    Configures the GPIO pin, RB14, as an input.
+
+  @Description
+    Configures the GPIO pin, RB14, as an input.
+
+  @Preconditions
+    None.
+
+  @Returns
+    None.
+
+  @Param
+    None.
+
+  @Example
+    <code>
+    // Sets the RB14 as an input
+    HV_ON_OFF_SetDigitalInput();
+    </code>
+
+*/
+#define HV_ON_OFF_SetDigitalInput()  _TRISB14 = 1
+/**
+  @Summary
+    Configures the GPIO pin, RB14, as an output.
+
+  @Description
+    Configures the GPIO pin, RB14, as an output.
+
+  @Preconditions
+    None.
+
+  @Returns
+    None.
+
+  @Param
+    None.
+
+  @Example
+    <code>
+    // Sets the RB14 as an output
+    HV_ON_OFF_SetDigitalOutput();
+    </code>
+
+*/
+#define HV_ON_OFF_SetDigitalOutput() _TRISB14 = 0
 /**
   @Summary
     Sets the GPIO pin, RB15, high using LATB15.
