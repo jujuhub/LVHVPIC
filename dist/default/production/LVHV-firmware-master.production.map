@@ -99,11 +99,11 @@ Default Scalar Model: Small
 section                    address   length (PC units)   length (bytes) (dec)
 -------                    -------   -----------------   --------------------
 .text                        0x200               0x3a2           0x573  (1395)
-.text                        0x5a2              0x1982          0x2643  (9795)
-.dinit                      0x1f24                0x2e            0x45  (69)
-.text                       0x1f52                0x50            0x78  (120)
+.text                        0x5a2              0x198a          0x264f  (9807)
+.dinit                      0x1f2c                0x2e            0x45  (69)
+.text                       0x1f5a                0x50            0x78  (120)
 
-                 Total "program" memory used (bytes):         0x2c73  (11379) 4%
+                 Total "program" memory used (bytes):         0x2c7f  (11391) 4%
 
 
 "data" Memory  [Origin = 0x1000, Length = 0x4000]
@@ -113,7 +113,7 @@ section                    address      alignment gaps    total length  (dec)
 .nbss                       0x1000                   0            0x1c  (28)
 .ndata                      0x101c                   0             0x2  (2)
 .bss                        0x101e                   0            0x32  (50)
-_0000000005A4B6E061675eaa    0x1200                   0           0x200  (512)
+_0000000005AB26E062827c0a    0x1200                   0           0x200  (512)
 
                  Total "data" memory used (bytes):          0x250  (592) 3%
 
@@ -147,120 +147,120 @@ External Symbols in Program Memory (by address):
                   0x00034c                  __MI2C1Interrupt
                   0x00059c                  __DefaultInterrupt
                   0x0005fc                  _main
-                  0x0010e0                  _CAN1_Initialize
-                  0x0011e2                  _CAN1_TransmitEnable
-                  0x0011fc                  _CAN1_ReceiveEnable
-                  0x001216                  _CAN1_transmit
-                  0x001282                  _CAN1_receive
-                  0x0012ea                  _CAN1_isBusOff
-                  0x001302                  _CAN1_isRXErrorPassive
-                  0x00131a                  _CAN1_isTXErrorPassive
-                  0x001332                  _CAN1_messagesInBuffer
-                  0x00136c                  _CAN1_sleep
-                  0x00166c                  _I2C_Write
-                  0x0016d4                  _I2C_Read
-                  0x00173c                  _fetch_RHT
-                  0x001820                  _init_LTC2631
-                  0x001896                  _I2C1_Initialize
-                  0x0018cc                  _I2C1_ErrorCountGet
-                  0x001916                  _I2C1_MasterWrite
-                  0x001948                  _I2C1_MasterRead
-                  0x00197a                  _I2C1_MasterTRBInsert
-                  0x0019f2                  _I2C1_MasterReadTRBBuild
-                  0x001a22                  _I2C1_MasterWriteTRBBuild
-                  0x001a46                  _I2C1_MasterQueueIsEmpty
-                  0x001a5c                  _I2C1_MasterQueueIsFull
-                  0x001a72                  _SPI2_Initialize
-                  0x001a84                  _SPI2_Exchange
-                  0x001ab4                  _SPI2_ExchangeBuffer
-                  0x001b7e                  _SPI2_Exchange8bit
-                  0x001b8e                  _SPI2_Exchange8bitBuffer
-                  0x001ba2                  _SPI2_TransferModeGet
-                  0x001bb8                  _SPI2_StatusGet
-                  0x001bc0                  _RESET_GetCause
-                  0x001ccc                  _RESET_CauseClearAll
-                  0x001cd4                  _DMA_Initialize
-                  0x001d3c                  _DMA_Channel0_Tasks
-                  0x001d54                  _DMA_Channel1_Tasks
-                  0x001d6e                  _DMA_Channel2_Tasks
-                  0x001d88                  _DMA_Channel3_Tasks
-                  0x001d9a                  _PIN_MANAGER_Initialize
-                  0x001e14                  _ECAN1_Initialize
-                  0x001e1c                  _ECAN1_TransmitEnable
-                  0x001e24                  _ECAN1_ReceiveEnable
-                  0x001e2c                  _ECAN1_transmit
-                  0x001e3e                  _ECAN1_receive
-                  0x001e4a                  _ECAN1_isBusOff
-                  0x001e52                  _ECAN1_isRXErrorPassive
-                  0x001e5a                  _ECAN1_isTXErrorPassive
-                  0x001e62                  _ECAN1_messagesInBuffer
-                  0x001e6a                  _ECAN1_sleep
-                  0x001e72                  _CLOCK_Initialize
-                  0x001eae                  _ADC1_Initialize
-                  0x001ed6                  _ADC1_Tasks
-                  0x001f08                  _SYSTEM_Initialize
-                  0x001f52                  _OSCILLATOR_Initialize
-                  0x001f5a                  _SYSTEM_GetResetCause
-                  0x001f6a                  _SYSTEM_ResetCauseClearAll
-                  0x001f72                  _INTERRUPT_Initialize
+                  0x0010e8                  _CAN1_Initialize
+                  0x0011ea                  _CAN1_TransmitEnable
+                  0x001204                  _CAN1_ReceiveEnable
+                  0x00121e                  _CAN1_transmit
+                  0x00128a                  _CAN1_receive
+                  0x0012f2                  _CAN1_isBusOff
+                  0x00130a                  _CAN1_isRXErrorPassive
+                  0x001322                  _CAN1_isTXErrorPassive
+                  0x00133a                  _CAN1_messagesInBuffer
+                  0x001374                  _CAN1_sleep
+                  0x001674                  _I2C_Write
+                  0x0016dc                  _I2C_Read
+                  0x001744                  _fetch_RHT
+                  0x001828                  _init_LTC2631
+                  0x00189e                  _I2C1_Initialize
+                  0x0018d4                  _I2C1_ErrorCountGet
+                  0x00191e                  _I2C1_MasterWrite
+                  0x001950                  _I2C1_MasterRead
+                  0x001982                  _I2C1_MasterTRBInsert
+                  0x0019fa                  _I2C1_MasterReadTRBBuild
+                  0x001a2a                  _I2C1_MasterWriteTRBBuild
+                  0x001a4e                  _I2C1_MasterQueueIsEmpty
+                  0x001a64                  _I2C1_MasterQueueIsFull
+                  0x001a7a                  _SPI2_Initialize
+                  0x001a8c                  _SPI2_Exchange
+                  0x001abc                  _SPI2_ExchangeBuffer
+                  0x001b86                  _SPI2_Exchange8bit
+                  0x001b96                  _SPI2_Exchange8bitBuffer
+                  0x001baa                  _SPI2_TransferModeGet
+                  0x001bc0                  _SPI2_StatusGet
+                  0x001bc8                  _RESET_GetCause
+                  0x001cd4                  _RESET_CauseClearAll
+                  0x001cdc                  _DMA_Initialize
+                  0x001d44                  _DMA_Channel0_Tasks
+                  0x001d5c                  _DMA_Channel1_Tasks
+                  0x001d76                  _DMA_Channel2_Tasks
+                  0x001d90                  _DMA_Channel3_Tasks
+                  0x001da2                  _PIN_MANAGER_Initialize
+                  0x001e1c                  _ECAN1_Initialize
+                  0x001e24                  _ECAN1_TransmitEnable
+                  0x001e2c                  _ECAN1_ReceiveEnable
+                  0x001e34                  _ECAN1_transmit
+                  0x001e46                  _ECAN1_receive
+                  0x001e52                  _ECAN1_isBusOff
+                  0x001e5a                  _ECAN1_isRXErrorPassive
+                  0x001e62                  _ECAN1_isTXErrorPassive
+                  0x001e6a                  _ECAN1_messagesInBuffer
+                  0x001e72                  _ECAN1_sleep
+                  0x001e7a                  _CLOCK_Initialize
+                  0x001eb6                  _ADC1_Initialize
+                  0x001ede                  _ADC1_Tasks
+                  0x001f10                  _SYSTEM_Initialize
+                  0x001f5a                  _OSCILLATOR_Initialize
+                  0x001f62                  _SYSTEM_GetResetCause
+                  0x001f72                  _SYSTEM_ResetCauseClearAll
+                  0x001f7a                  _INTERRUPT_Initialize
                   0x02ab80                  __FSEC.sec
 
 External Symbols in Program Memory (by name):
 
-                  0x001eae                  _ADC1_Initialize
-                  0x001ed6                  _ADC1_Tasks
-                  0x0010e0                  _CAN1_Initialize
-                  0x0011fc                  _CAN1_ReceiveEnable
-                  0x0011e2                  _CAN1_TransmitEnable
-                  0x0012ea                  _CAN1_isBusOff
-                  0x001302                  _CAN1_isRXErrorPassive
-                  0x00131a                  _CAN1_isTXErrorPassive
-                  0x001332                  _CAN1_messagesInBuffer
-                  0x001282                  _CAN1_receive
-                  0x00136c                  _CAN1_sleep
-                  0x001216                  _CAN1_transmit
-                  0x001e72                  _CLOCK_Initialize
-                  0x001d3c                  _DMA_Channel0_Tasks
-                  0x001d54                  _DMA_Channel1_Tasks
-                  0x001d6e                  _DMA_Channel2_Tasks
-                  0x001d88                  _DMA_Channel3_Tasks
-                  0x001cd4                  _DMA_Initialize
-                  0x001e14                  _ECAN1_Initialize
-                  0x001e24                  _ECAN1_ReceiveEnable
-                  0x001e1c                  _ECAN1_TransmitEnable
-                  0x001e4a                  _ECAN1_isBusOff
-                  0x001e52                  _ECAN1_isRXErrorPassive
-                  0x001e5a                  _ECAN1_isTXErrorPassive
-                  0x001e62                  _ECAN1_messagesInBuffer
-                  0x001e3e                  _ECAN1_receive
-                  0x001e6a                  _ECAN1_sleep
-                  0x001e2c                  _ECAN1_transmit
-                  0x0018cc                  _I2C1_ErrorCountGet
-                  0x001896                  _I2C1_Initialize
-                  0x001a46                  _I2C1_MasterQueueIsEmpty
-                  0x001a5c                  _I2C1_MasterQueueIsFull
-                  0x001948                  _I2C1_MasterRead
-                  0x0019f2                  _I2C1_MasterReadTRBBuild
-                  0x00197a                  _I2C1_MasterTRBInsert
-                  0x001916                  _I2C1_MasterWrite
-                  0x001a22                  _I2C1_MasterWriteTRBBuild
-                  0x0016d4                  _I2C_Read
-                  0x00166c                  _I2C_Write
-                  0x001f72                  _INTERRUPT_Initialize
-                  0x001f52                  _OSCILLATOR_Initialize
-                  0x001d9a                  _PIN_MANAGER_Initialize
-                  0x001ccc                  _RESET_CauseClearAll
-                  0x001bc0                  _RESET_GetCause
-                  0x001a84                  _SPI2_Exchange
-                  0x001b7e                  _SPI2_Exchange8bit
-                  0x001b8e                  _SPI2_Exchange8bitBuffer
-                  0x001ab4                  _SPI2_ExchangeBuffer
-                  0x001a72                  _SPI2_Initialize
-                  0x001bb8                  _SPI2_StatusGet
-                  0x001ba2                  _SPI2_TransferModeGet
-                  0x001f5a                  _SYSTEM_GetResetCause
-                  0x001f08                  _SYSTEM_Initialize
-                  0x001f6a                  _SYSTEM_ResetCauseClearAll
+                  0x001eb6                  _ADC1_Initialize
+                  0x001ede                  _ADC1_Tasks
+                  0x0010e8                  _CAN1_Initialize
+                  0x001204                  _CAN1_ReceiveEnable
+                  0x0011ea                  _CAN1_TransmitEnable
+                  0x0012f2                  _CAN1_isBusOff
+                  0x00130a                  _CAN1_isRXErrorPassive
+                  0x001322                  _CAN1_isTXErrorPassive
+                  0x00133a                  _CAN1_messagesInBuffer
+                  0x00128a                  _CAN1_receive
+                  0x001374                  _CAN1_sleep
+                  0x00121e                  _CAN1_transmit
+                  0x001e7a                  _CLOCK_Initialize
+                  0x001d44                  _DMA_Channel0_Tasks
+                  0x001d5c                  _DMA_Channel1_Tasks
+                  0x001d76                  _DMA_Channel2_Tasks
+                  0x001d90                  _DMA_Channel3_Tasks
+                  0x001cdc                  _DMA_Initialize
+                  0x001e1c                  _ECAN1_Initialize
+                  0x001e2c                  _ECAN1_ReceiveEnable
+                  0x001e24                  _ECAN1_TransmitEnable
+                  0x001e52                  _ECAN1_isBusOff
+                  0x001e5a                  _ECAN1_isRXErrorPassive
+                  0x001e62                  _ECAN1_isTXErrorPassive
+                  0x001e6a                  _ECAN1_messagesInBuffer
+                  0x001e46                  _ECAN1_receive
+                  0x001e72                  _ECAN1_sleep
+                  0x001e34                  _ECAN1_transmit
+                  0x0018d4                  _I2C1_ErrorCountGet
+                  0x00189e                  _I2C1_Initialize
+                  0x001a4e                  _I2C1_MasterQueueIsEmpty
+                  0x001a64                  _I2C1_MasterQueueIsFull
+                  0x001950                  _I2C1_MasterRead
+                  0x0019fa                  _I2C1_MasterReadTRBBuild
+                  0x001982                  _I2C1_MasterTRBInsert
+                  0x00191e                  _I2C1_MasterWrite
+                  0x001a2a                  _I2C1_MasterWriteTRBBuild
+                  0x0016dc                  _I2C_Read
+                  0x001674                  _I2C_Write
+                  0x001f7a                  _INTERRUPT_Initialize
+                  0x001f5a                  _OSCILLATOR_Initialize
+                  0x001da2                  _PIN_MANAGER_Initialize
+                  0x001cd4                  _RESET_CauseClearAll
+                  0x001bc8                  _RESET_GetCause
+                  0x001a8c                  _SPI2_Exchange
+                  0x001b86                  _SPI2_Exchange8bit
+                  0x001b96                  _SPI2_Exchange8bitBuffer
+                  0x001abc                  _SPI2_ExchangeBuffer
+                  0x001a7a                  _SPI2_Initialize
+                  0x001bc0                  _SPI2_StatusGet
+                  0x001baa                  _SPI2_TransferModeGet
+                  0x001f62                  _SYSTEM_GetResetCause
+                  0x001f10                  _SYSTEM_Initialize
+                  0x001f72                  _SYSTEM_ResetCauseClearAll
                   0x000324                  __AddressError
                   0x0002fa                  __C1Interrupt
                   0x000334                  __DMACError
@@ -276,8 +276,8 @@ External Symbols in Program Memory (by name):
                   0x000248                  __data_init_extended
                   0x00023c                  __psv_init
                   0x000200                  __resetPRI
-                  0x00173c                  _fetch_RHT
-                  0x001820                  _init_LTC2631
+                  0x001744                  _fetch_RHT
+                  0x001828                  _init_LTC2631
                   0x0005fc                  _main
 
 Memory Configuration
@@ -473,7 +473,7 @@ __FALTREG
  .debug_abbrev    0x000f21        0x1dc build/default/production/main.o
  .debug_abbrev    0x0010fd        0x101 build/default/production/i2c_devices.o
 
-.debug_line       0x000000       0x1539
+.debug_line       0x000000       0x153f
  *(.debug_line)
  .debug_line      0x000000        0x13e build/default/production/mcc_generated_files/reset.o
  .debug_line      0x00013e        0x141 build/default/production/mcc_generated_files/system.o
@@ -488,8 +488,8 @@ __FALTREG
  .debug_line      0x000c22        0x13a build/default/production/mcc_generated_files/ecan1.o
  .debug_line      0x000d5c        0x1dd build/default/production/mcc_generated_files/i2c1.o
  .debug_line      0x000f39        0x144 build/default/production/mcc_generated_files/spi2.o
- .debug_line      0x00107d        0x32e build/default/production/main.o
- .debug_line      0x0013ab        0x18e build/default/production/i2c_devices.o
+ .debug_line      0x00107d        0x334 build/default/production/main.o
+ .debug_line      0x0013b1        0x18e build/default/production/i2c_devices.o
 
 .debug_frame      0x000000        0xae4
  *(.debug_frame)
@@ -1996,9 +1996,9 @@ __c30_signature
 .ndata              0x101c          0x2
  .ndata             0x101c          0x2 build/default/production/mcc_generated_files/traps.o
 
-_0000000005A4B6E061675eaa
+_0000000005AB26E062827c0a
                     0x1200        0x200
- _0000000005A4B6E061675eaa
+ _0000000005AB26E062827c0a
                     0x1200        0x200 build/default/production/mcc_generated_files/can1.o
 
 .bss                0x101e         0x32
@@ -2102,89 +2102,89 @@ _0000000005A4B6E061675eaa
  .ivt._MI2C1Interrupt
                   0x000036          0x2 build/default/production/mcc_generated_files/i2c1.o
 
-.text             0x0005a2       0x1982
- .text            0x0005a2        0xa9e build/default/production/main.o
+.text             0x0005a2       0x198a
+ .text            0x0005a2        0xaa6 build/default/production/main.o
                   0x0005fc                  _main
- .text            0x001040        0x62c build/default/production/mcc_generated_files/can1.o
-                  0x0010e0                  _CAN1_Initialize
-                  0x0011e2                  _CAN1_TransmitEnable
-                  0x0011fc                  _CAN1_ReceiveEnable
-                  0x001216                  _CAN1_transmit
-                  0x001282                  _CAN1_receive
-                  0x0012ea                  _CAN1_isBusOff
-                  0x001302                  _CAN1_isRXErrorPassive
-                  0x00131a                  _CAN1_isTXErrorPassive
-                  0x001332                  _CAN1_messagesInBuffer
-                  0x00136c                  _CAN1_sleep
- .text            0x00166c        0x22a build/default/production/i2c_devices.o
-                  0x00166c                  _I2C_Write
-                  0x0016d4                  _I2C_Read
-                  0x00173c                  _fetch_RHT
-                  0x001820                  _init_LTC2631
- .text            0x001896        0x1dc build/default/production/mcc_generated_files/i2c1.o
-                  0x001896                  _I2C1_Initialize
-                  0x0018cc                  _I2C1_ErrorCountGet
-                  0x001916                  _I2C1_MasterWrite
-                  0x001948                  _I2C1_MasterRead
-                  0x00197a                  _I2C1_MasterTRBInsert
-                  0x0019f2                  _I2C1_MasterReadTRBBuild
-                  0x001a22                  _I2C1_MasterWriteTRBBuild
-                  0x001a46                  _I2C1_MasterQueueIsEmpty
-                  0x001a5c                  _I2C1_MasterQueueIsFull
- .text            0x001a72        0x14e build/default/production/mcc_generated_files/spi2.o
-                  0x001a72                  _SPI2_Initialize
-                  0x001a84                  _SPI2_Exchange
-                  0x001ab4                  _SPI2_ExchangeBuffer
-                  0x001b7e                  _SPI2_Exchange8bit
-                  0x001b8e                  _SPI2_Exchange8bitBuffer
-                  0x001ba2                  _SPI2_TransferModeGet
-                  0x001bb8                  _SPI2_StatusGet
- .text            0x001bc0        0x114 build/default/production/mcc_generated_files/reset.o
-                  0x001bc0                  _RESET_GetCause
-                  0x001bc8                  _RESET_CauseHandler
-                  0x001ccc                  _RESET_CauseClearAll
- .text            0x001cd4         0xc6 build/default/production/mcc_generated_files/dma.o
-                  0x001cd4                  _DMA_Initialize
-                  0x001d36                  _DMA_Channel0_CallBack
-                  0x001d3c                  _DMA_Channel0_Tasks
-                  0x001d4e                  _DMA_Channel1_CallBack
-                  0x001d54                  _DMA_Channel1_Tasks
-                  0x001d68                  _DMA_Channel2_CallBack
-                  0x001d6e                  _DMA_Channel2_Tasks
-                  0x001d82                  _DMA_Channel3_CallBack
-                  0x001d88                  _DMA_Channel3_Tasks
- .text            0x001d9a         0x7a build/default/production/mcc_generated_files/pin_manager.o
-                  0x001d9a                  _PIN_MANAGER_Initialize
- .text            0x001e14         0x5e build/default/production/mcc_generated_files/ecan1.o
-                  0x001e14                  _ECAN1_Initialize
-                  0x001e1c                  _ECAN1_TransmitEnable
-                  0x001e24                  _ECAN1_ReceiveEnable
-                  0x001e2c                  _ECAN1_transmit
-                  0x001e3e                  _ECAN1_receive
-                  0x001e4a                  _ECAN1_isBusOff
-                  0x001e52                  _ECAN1_isRXErrorPassive
-                  0x001e5a                  _ECAN1_isTXErrorPassive
-                  0x001e62                  _ECAN1_messagesInBuffer
-                  0x001e6a                  _ECAN1_sleep
- .text            0x001e72         0x3c build/default/production/mcc_generated_files/clock.o
-                  0x001e72                  _CLOCK_Initialize
- .text            0x001eae         0x3c build/default/production/mcc_generated_files/adc1.o
-                  0x001eae                  _ADC1_Initialize
-                  0x001ed0                  _ADC1_CallBack
-                  0x001ed6                  _ADC1_Tasks
- .text            0x001eea         0x3a build/default/production/mcc_generated_files/system.o
-                  0x001f08                  _SYSTEM_Initialize
+ .text            0x001048        0x62c build/default/production/mcc_generated_files/can1.o
+                  0x0010e8                  _CAN1_Initialize
+                  0x0011ea                  _CAN1_TransmitEnable
+                  0x001204                  _CAN1_ReceiveEnable
+                  0x00121e                  _CAN1_transmit
+                  0x00128a                  _CAN1_receive
+                  0x0012f2                  _CAN1_isBusOff
+                  0x00130a                  _CAN1_isRXErrorPassive
+                  0x001322                  _CAN1_isTXErrorPassive
+                  0x00133a                  _CAN1_messagesInBuffer
+                  0x001374                  _CAN1_sleep
+ .text            0x001674        0x22a build/default/production/i2c_devices.o
+                  0x001674                  _I2C_Write
+                  0x0016dc                  _I2C_Read
+                  0x001744                  _fetch_RHT
+                  0x001828                  _init_LTC2631
+ .text            0x00189e        0x1dc build/default/production/mcc_generated_files/i2c1.o
+                  0x00189e                  _I2C1_Initialize
+                  0x0018d4                  _I2C1_ErrorCountGet
+                  0x00191e                  _I2C1_MasterWrite
+                  0x001950                  _I2C1_MasterRead
+                  0x001982                  _I2C1_MasterTRBInsert
+                  0x0019fa                  _I2C1_MasterReadTRBBuild
+                  0x001a2a                  _I2C1_MasterWriteTRBBuild
+                  0x001a4e                  _I2C1_MasterQueueIsEmpty
+                  0x001a64                  _I2C1_MasterQueueIsFull
+ .text            0x001a7a        0x14e build/default/production/mcc_generated_files/spi2.o
+                  0x001a7a                  _SPI2_Initialize
+                  0x001a8c                  _SPI2_Exchange
+                  0x001abc                  _SPI2_ExchangeBuffer
+                  0x001b86                  _SPI2_Exchange8bit
+                  0x001b96                  _SPI2_Exchange8bitBuffer
+                  0x001baa                  _SPI2_TransferModeGet
+                  0x001bc0                  _SPI2_StatusGet
+ .text            0x001bc8        0x114 build/default/production/mcc_generated_files/reset.o
+                  0x001bc8                  _RESET_GetCause
+                  0x001bd0                  _RESET_CauseHandler
+                  0x001cd4                  _RESET_CauseClearAll
+ .text            0x001cdc         0xc6 build/default/production/mcc_generated_files/dma.o
+                  0x001cdc                  _DMA_Initialize
+                  0x001d3e                  _DMA_Channel0_CallBack
+                  0x001d44                  _DMA_Channel0_Tasks
+                  0x001d56                  _DMA_Channel1_CallBack
+                  0x001d5c                  _DMA_Channel1_Tasks
+                  0x001d70                  _DMA_Channel2_CallBack
+                  0x001d76                  _DMA_Channel2_Tasks
+                  0x001d8a                  _DMA_Channel3_CallBack
+                  0x001d90                  _DMA_Channel3_Tasks
+ .text            0x001da2         0x7a build/default/production/mcc_generated_files/pin_manager.o
+                  0x001da2                  _PIN_MANAGER_Initialize
+ .text            0x001e1c         0x5e build/default/production/mcc_generated_files/ecan1.o
+                  0x001e1c                  _ECAN1_Initialize
+                  0x001e24                  _ECAN1_TransmitEnable
+                  0x001e2c                  _ECAN1_ReceiveEnable
+                  0x001e34                  _ECAN1_transmit
+                  0x001e46                  _ECAN1_receive
+                  0x001e52                  _ECAN1_isBusOff
+                  0x001e5a                  _ECAN1_isRXErrorPassive
+                  0x001e62                  _ECAN1_isTXErrorPassive
+                  0x001e6a                  _ECAN1_messagesInBuffer
+                  0x001e72                  _ECAN1_sleep
+ .text            0x001e7a         0x3c build/default/production/mcc_generated_files/clock.o
+                  0x001e7a                  _CLOCK_Initialize
+ .text            0x001eb6         0x3c build/default/production/mcc_generated_files/adc1.o
+                  0x001eb6                  _ADC1_Initialize
+                  0x001ed8                  _ADC1_CallBack
+                  0x001ede                  _ADC1_Tasks
+ .text            0x001ef2         0x3a build/default/production/mcc_generated_files/system.o
+                  0x001f10                  _SYSTEM_Initialize
 
-.dinit            0x001f24         0x2e
- .dinit           0x001f24         0x2e data_init
+.dinit            0x001f2c         0x2e
+ .dinit           0x001f2c         0x2e data_init
 
-.text             0x001f52         0x50
- .text            0x001f52         0x20 build/default/production/mcc_generated_files/mcc.o
-                  0x001f52                  _OSCILLATOR_Initialize
-                  0x001f5a                  _SYSTEM_GetResetCause
-                  0x001f62                  _SYSTEM_ResetCauseHandler
-                  0x001f6a                  _SYSTEM_ResetCauseClearAll
- .text            0x001f72         0x1a build/default/production/mcc_generated_files/interrupt_manager.o
-                  0x001f72                  _INTERRUPT_Initialize
- .text            0x001f8c         0x16 build/default/production/mcc_generated_files/traps.o
-                  0x001f8c                  _TRAPS_halt_on_error
+.text             0x001f5a         0x50
+ .text            0x001f5a         0x20 build/default/production/mcc_generated_files/mcc.o
+                  0x001f5a                  _OSCILLATOR_Initialize
+                  0x001f62                  _SYSTEM_GetResetCause
+                  0x001f6a                  _SYSTEM_ResetCauseHandler
+                  0x001f72                  _SYSTEM_ResetCauseClearAll
+ .text            0x001f7a         0x1a build/default/production/mcc_generated_files/interrupt_manager.o
+                  0x001f7a                  _INTERRUPT_Initialize
+ .text            0x001f94         0x16 build/default/production/mcc_generated_files/traps.o
+                  0x001f94                  _TRAPS_halt_on_error

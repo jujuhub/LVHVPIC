@@ -485,10 +485,15 @@ int main(void)
                 HV_ON_OFF_SetDigitalOutput();
                 HV_ON_OFF_SetLow();
                 HV_EN = HV_ON_OFF_GetValue();
+//                IO_RB4_SetDigitalOutput();    //testing relay w GPIO pin
+//                IO_RB4_SetLow();
+//                HV_EN = IO_RB4_GetValue();
                 while (HV_EN != DISABLED)
                 {
                     HV_ON_OFF_SetLow();
                     HV_EN = HV_ON_OFF_GetValue();
+//                    IO_RB4_SetLow();          //testing relay w GPIO pin
+//                    HV_EN = IO_RB4_GetValue();
                     
                     retryTimeOut++;
                     if (retryTimeOut == MAX_RETRY)
@@ -518,10 +523,15 @@ int main(void)
                 HV_ON_OFF_SetDigitalOutput();
                 HV_ON_OFF_SetHigh();
                 HV_EN = HV_ON_OFF_GetValue();
+//                IO_RB4_SetDigitalOutput();        //testing relay w GPIO pin
+//                IO_RB4_SetHigh();
+//                HV_EN = IO_RB4_GetValue();
                 while (HV_EN != ENABLED)
                 {
                     HV_ON_OFF_SetHigh();
                     HV_EN = HV_ON_OFF_GetValue();
+//                    IO_RB4_SetHigh();             //testing relay w GPIO pin
+//                    HV_EN = IO_RB4_GetValue();
                     
                     retryTimeOut++;
                     if (retryTimeOut == MAX_RETRY)
@@ -550,6 +560,7 @@ int main(void)
             case 0x034: // Status of HV_EN & HV_MON request
                 HV_EN = HV_ON_OFF_GetValue(); // enabled or disabled?
                 ADC1_ChannelSelectSet(ADC1_HV_MON); // get HV reading
+                AD1CON1bits.DONE = 0;   //TODO:need to test (11/02)
                 ADC1_SamplingStart();
                 for (dt = 0; dt < ADC_DELAY; dt++);
                 ADC1_SamplingStop(); // starts conversion
@@ -565,6 +576,7 @@ int main(void)
                 {
                     adcResult = ADC1_Channel0ConversionResultGet();
                 }
+                adcResult = adcResult*2;    //x2 for opamp prog res 2000:1
                 txCANmsg.frame.id = 0x035;
                 txCANmsg.frame.idType = CAN_FRAME_STD;
                 txCANmsg.frame.msgtype = CAN_MSG_DATA;
